@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/i18n/context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -354,7 +355,7 @@ function BookingRow({
   locale: string;
   showDate?: boolean;
   onUpdateStatus: (id: string, status: string) => void;
-  t: (key: string) => string;
+  t: (key: TranslationKey) => string;
 }) {
   const badge = STATUS_BADGE[booking.status];
   const serviceName = booking.service
