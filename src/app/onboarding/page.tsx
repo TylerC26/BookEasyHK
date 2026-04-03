@@ -99,13 +99,13 @@ function OnboardingWizard() {
 
   const updateService = (idx: number, field: keyof ServiceDraft, value: string | number) => {
     const updated = [...services];
-    (updated[idx] as Record<string, string | number>)[field] = value;
+    (updated[idx] as unknown as Record<string, string | number>)[field] = value;
     setServices(updated);
   };
 
   const updateHour = (idx: number, field: string, value: string | boolean) => {
     const updated = [...hours];
-    (updated[idx] as Record<string, string | boolean>)[field] = value;
+    (updated[idx] as unknown as Record<string, string | boolean>)[field] = value;
     setHours(updated);
   };
 

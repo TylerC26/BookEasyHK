@@ -143,13 +143,13 @@ export default function SettingsPage() {
 
   const updateService = (idx: number, field: string, value: string | number | boolean | null) => {
     const updated = [...services];
-    (updated[idx] as Record<string, unknown>)[field] = value;
+    (updated[idx] as unknown as Record<string, unknown>)[field] = value;
     setServices(updated);
   };
 
   const updateHour = (idx: number, field: string, value: string | boolean) => {
     const updated = [...hours];
-    (updated[idx] as Record<string, unknown>)[field] = value;
+    (updated[idx] as unknown as Record<string, unknown>)[field] = value;
     setHours(updated);
   };
 
