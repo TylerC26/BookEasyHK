@@ -37,8 +37,8 @@ async function sendWhatsAppMessage(message: WhatsAppMessage): Promise<boolean> {
       body: JSON.stringify({
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
-        to: message.to.replace(/[^0-9]/g, ''),
         ...message,
+        to: message.to.replace(/[^0-9]/g, ''),
       }),
     });
 
