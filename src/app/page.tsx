@@ -2,283 +2,464 @@
 
 import { I18nProvider, useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/language-toggle';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import Link from 'next/link';
-import {
-  MessageSquare,
-  Globe,
-  Smartphone,
-  Shield,
-  Zap,
-  Clock,
-  Check,
-  ArrowRight,
-  Star,
-} from 'lucide-react';
+import Image from 'next/image';
+import { Check, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 function LandingPage() {
   const { t, locale } = useI18n();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const features = [
-    { icon: Globe, title: t('feature1Title'), desc: t('feature1Desc'), color: 'bg-blue-50 text-blue-600' },
-    { icon: MessageSquare, title: t('feature2Title'), desc: t('feature2Desc'), color: 'bg-green-50 text-green-600' },
-    { icon: Smartphone, title: t('feature3Title'), desc: t('feature3Desc'), color: 'bg-purple-50 text-purple-600' },
-    { icon: Shield, title: t('feature4Title'), desc: t('feature4Desc'), color: 'bg-amber-50 text-amber-600' },
-    { icon: Zap, title: t('feature5Title'), desc: t('feature5Desc'), color: 'bg-rose-50 text-rose-600' },
-    { icon: Clock, title: t('feature6Title'), desc: t('feature6Desc'), color: 'bg-teal-50 text-teal-600' },
+    {
+      icon: 'language',
+      title: t('feature1Title'),
+      desc: t('feature1Desc'),
+    },
+    {
+      icon: 'chat_bubble',
+      title: t('feature2Title'),
+      desc: t('feature2Desc'),
+    },
+    {
+      icon: 'install_mobile',
+      title: t('feature3Title'),
+      desc: t('feature3Desc'),
+    },
+    {
+      icon: 'event_busy',
+      title: t('feature4Title'),
+      desc: t('feature4Desc'),
+    },
+    {
+      icon: 'smartphone',
+      title: t('feature5Title'),
+      desc: t('feature5Desc'),
+    },
+    {
+      icon: 'timer',
+      title: t('feature6Title'),
+      desc: t('feature6Desc'),
+    },
   ];
 
-  const starterFeatures = locale === 'zh-HK'
-    ? ['1 位員工', '無限預約', 'WhatsApp 提醒', '繁體中文介面', '手機優先設計']
-    : ['1 staff member', 'Unlimited bookings', 'WhatsApp reminders', 'Traditional Chinese UI', 'Mobile-first design'];
+  const starterFeatures =
+    locale === 'zh-HK'
+      ? ['每月 50 個預約', '標準提醒']
+      : ['Up to 50 bookings/mo', 'Standard Reminders'];
 
-  const proFeatures = locale === 'zh-HK'
-    ? ['最多 5 位員工', 'FPS/PayMe 訂金', '預約分析報告', '自訂提醒訊息', '優先支援']
-    : ['Up to 5 staff', 'FPS/PayMe deposits', 'Booking analytics', 'Custom reminders', 'Priority support'];
+  const proFeatures =
+    locale === 'zh-HK'
+      ? ['無限預約', 'WhatsApp 提醒', '自訂品牌']
+      : ['Unlimited bookings', 'WhatsApp Reminders', 'Custom Branding'];
 
-  const proAiFeatures = locale === 'zh-HK'
-    ? ['專業版所有功能', 'AI 預約助手', '智能時段建議', '自動重新安排', '24/7 WhatsApp 接待']
-    : ['Everything in Pro', 'AI scheduling assistant', 'Smart slot suggestions', 'Auto rescheduling', '24/7 WhatsApp receptionist'];
+  const proAiFeatures =
+    locale === 'zh-HK'
+      ? ['專業版所有功能', 'AI 預約助手', '智能容量分析']
+      : ['Everything in Pro', 'AI Scheduling Assistant', 'Smart Capacity Analytics'];
+
+  const steps = [
+    {
+      num: '1',
+      title: locale === 'zh-HK' ? '建立帳戶' : 'Create Account',
+      desc:
+        locale === 'zh-HK'
+          ? '以香港手機號碼或電郵數秒內完成註冊。'
+          : 'Register with your HK mobile number or email in seconds.',
+    },
+    {
+      num: '2',
+      title: locale === 'zh-HK' ? '新增服務' : 'Add Services',
+      desc:
+        locale === 'zh-HK'
+          ? '輸入你的服務項目、價錢及員工排班。'
+          : 'Input your services, prices, and staff availability.',
+    },
+    {
+      num: '3',
+      title: locale === 'zh-HK' ? '分享連結' : 'Share Link',
+      desc:
+        locale === 'zh-HK'
+          ? '將預約連結分享到 Instagram 簡介或 WhatsApp 狀態。'
+          : 'Put your booking link in your Instagram bio or WhatsApp status.',
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-bg text-on-surface">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="text-xl font-bold text-primary">BookEasy HK</span>
-          <div className="flex items-center gap-3">
+      <nav className="bg-bg neomorph-raised sticky top-0 z-50">
+        <div className="flex justify-between items-center w-full px-6 md:px-8 py-4 max-w-7xl mx-auto">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/bookeasy-logo.svg"
+            alt="BookEasy HK"
+            className="h-14 w-auto"
+          />
+          {/* Desktop nav links */}
+          <div className="hidden md:flex gap-8 items-center">
+            <a
+              className="text-primary border-b-2 border-primary font-semibold py-1"
+              href="#features"
+            >
+              {locale === 'zh-HK' ? '功能' : 'Features'}
+            </a>
+            <a
+              className="text-muted hover:text-primary transition-colors py-1"
+              href="#how-it-works"
+            >
+              {locale === 'zh-HK' ? '使用方法' : 'How it Works'}
+            </a>
+            <a
+              className="text-muted hover:text-primary transition-colors py-1"
+              href="#pricing"
+            >
+              {locale === 'zh-HK' ? '定價' : 'Pricing'}
+            </a>
+          </div>
+          {/* Desktop auth buttons */}
+          <div className="hidden md:flex gap-3 items-center">
             <LanguageToggle />
-            <Link href="/auth/login">
-              <Button variant="ghost" size="sm">{t('login')}</Button>
+            <Link
+              href="/auth/login"
+              className="px-6 py-2 rounded-xl text-muted font-medium neomorph-hover transition-all active:scale-95 duration-200"
+            >
+              {t('login')}
             </Link>
-            <Link href="/auth/signup">
-              <Button size="sm">{t('heroCta')}</Button>
+            <Link
+              href="/auth/signup"
+              className="px-6 py-2 rounded-xl bg-surface neomorph-raised text-primary font-semibold neomorph-hover transition-all active:scale-95 duration-200"
+            >
+              {t('heroCta')}
             </Link>
           </div>
+          {/* Mobile right side */}
+          <div className="flex md:hidden items-center gap-2">
+            <LanguageToggle />
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="w-10 h-10 rounded-xl bg-surface neomorph-raised flex items-center justify-center text-primary"
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <div className="md:hidden px-6 pb-5 space-y-2 border-t border-outline-variant bg-[#d4d6dc]">
+            <a
+              href="#features"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl text-primary font-semibold neomorph-inset mt-4"
+            >
+              {locale === 'zh-HK' ? '功能' : 'Features'}
+            </a>
+            <a
+              href="#how-it-works"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl text-muted font-medium hover:text-primary transition-colors"
+            >
+              {locale === 'zh-HK' ? '使用方法' : 'How it Works'}
+            </a>
+            <a
+              href="#pricing"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl text-muted font-medium hover:text-primary transition-colors"
+            >
+              {locale === 'zh-HK' ? '定價' : 'Pricing'}
+            </a>
+            <div className="pt-2 flex flex-col gap-2">
+              <Link
+                href="/auth/login"
+                className="w-full py-3 rounded-xl text-center text-muted font-medium neomorph-inset"
+              >
+                {t('login')}
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="w-full py-3 rounded-xl text-center bg-surface neomorph-raised text-primary font-semibold"
+              >
+                {t('heroCta')}
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50" />
-        <div className="relative max-w-6xl mx-auto px-4 py-24 lg:py-32">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-light text-primary text-sm font-medium mb-6">
-              <Star size={14} />
-              {locale === 'zh-HK' ? '免費試用 3 個月 · 毋須信用卡' : '3-month free trial · No credit card'}
+      <main>
+        {/* Hero */}
+        <section className="max-w-7xl mx-auto px-8 py-24 flex flex-col lg:flex-row items-center gap-16">
+          <div className="lg:w-1/2 space-y-8">
+            <div className="inline-block px-4 py-1.5 rounded-full bg-surface neomorph-inset text-primary font-medium text-sm">
+              {locale === 'zh-HK'
+                ? '✨ 為香港中小企而設的 AI 排程'
+                : '✨ AI-Powered Scheduling for HK SMBs'}
             </div>
-            <h1 className="text-4xl lg:text-6xl font-bold text-secondary leading-tight mb-6">
-              {t('heroTitle')}
+            <h1 className="text-5xl lg:text-7xl font-semibold text-on-surface tracking-tight leading-tight">
+              {locale === 'zh-HK' ? (
+                <>
+                  告別在{' '}
+                  <span className="text-primary">WhatsApp</span>{' '}
+                  接單混亂
+                </>
+              ) : (
+                <>
+                  Stop Managing Bookings on{' '}
+                  <span className="text-primary">WhatsApp</span>
+                </>
+              )}
             </h1>
-            <p className="text-lg lg:text-xl text-muted leading-relaxed mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-on-surface-variant max-w-xl">
               {t('heroSubtitle')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/signup">
-                <Button size="lg" className="text-base px-8">
-                  {t('heroCta')} <ArrowRight size={18} />
-                </Button>
+            <div className="flex flex-wrap gap-6 pt-4">
+              <Link
+                href="/auth/signup"
+                className="px-10 py-4 rounded-xl bg-surface neomorph-raised text-primary text-lg font-semibold neomorph-hover transition-all active:scale-95"
+              >
+                {t('heroCta')}
               </Link>
-              <a href="#features">
-                <Button variant="outline" size="lg" className="text-base px-8">
-                  {t('heroSecondaryCta')}
-                </Button>
+              <a
+                href="#features"
+                className="px-10 py-4 rounded-xl bg-surface neomorph-inset text-on-surface-variant text-lg font-medium"
+              >
+                {t('heroSecondaryCta')}
               </a>
             </div>
-
-            {/* Social proof */}
-            <div className="mt-12 flex items-center justify-center gap-8 text-sm text-muted">
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  {['💅', '✂️', '🐾'].map((e, i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm border-2 border-white">
-                      {e}
-                    </div>
-                  ))}
-                </div>
-                <span>
-                  {locale === 'zh-HK' ? '適用於美甲、髮型、寵物美容等' : 'For nails, hair, pet grooming & more'}
-                </span>
-              </div>
+          </div>
+          <div className="lg:w-1/2 w-full">
+            <div className="p-4 rounded-3xl bg-surface neomorph-raised">
+              <Image
+                alt="Dashboard preview showing a clean calendar with booking slots"
+                className="rounded-2xl w-full"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1VztRECsTQaR_O23DayZ2nmMej3WkQgxRcLOWYqabnpGCUjcAtIOjksdhpPfuTSXkfVzivQ1XLG1pQXO7DQ1wA3A0Nd71l8Fgnh02AEPMxbUw3b3B38kHEQv--_lkXSHSIFOaJO2Y4lfob0m-Uwrnkho3BHjaCjqfXrshM6Wdhy_0GQWsxxVE3V-ta5HkNsQBnf8MeqjPdOQw5oqCW6Ke39T9YswKlFoqYgXIEqtDHRkLOsAy6A-X_VRtJ-LZ9Vb12drNAWRao2Lh"
+                width={800}
+                height={500}
+              />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Features */}
-      <section id="features" className="py-20 bg-bg">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">{t('featuresTitle')}</h2>
-          <p className="text-muted text-center mb-12 max-w-xl mx-auto">
-            {locale === 'zh-HK'
-              ? '專為香港小商戶量身打造，取代 WhatsApp 手動接單'
-              : 'Purpose-built for HK small businesses, replacing manual WhatsApp bookings'}
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Features */}
+        <section id="features" className="max-w-7xl mx-auto px-8 py-24">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl font-semibold text-on-surface">
+              {t('featuresTitle')}
+            </h2>
+            <p className="text-on-surface-variant max-w-2xl mx-auto">
+              {locale === 'zh-HK'
+                ? '專為香港小商戶量身打造，一站式預約管理平台。'
+                : 'The all-in-one platform designed specifically for the unique needs of local businesses in Hong Kong.'}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((f, i) => (
-              <Card key={i} className="hover:shadow-md transition-shadow">
-                <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-4`}>
-                  <f.icon size={24} />
+              <div
+                key={i}
+                className="p-8 rounded-3xl bg-surface neomorph-inset flex flex-col gap-4"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-surface neomorph-raised flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined">{f.icon}</span>
                 </div>
-                <h3 className="font-semibold text-secondary mb-2">{f.title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{f.desc}</p>
-              </Card>
+                <h3 className="text-xl font-semibold text-on-surface">
+                  {f.title}
+                </h3>
+                <p className="text-on-surface-variant">{f.desc}</p>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How it works */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            {locale === 'zh-HK' ? '三步即可開始' : 'Get Started in 3 Steps'}
-          </h2>
+        {/* How it Works */}
+        <section
+          id="how-it-works"
+          className="max-w-7xl mx-auto px-8 py-24 bg-surface-bright rounded-[3rem] neomorph-raised my-12"
+        >
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-semibold text-on-surface">
+              {locale === 'zh-HK' ? '三步即可開始' : 'Get Started in 3 Steps'}
+            </h2>
+          </div>
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-12 relative">
+            <div className="hidden lg:block absolute top-1/4 left-0 w-full h-0.5 bg-outline-variant neomorph-inset" />
+            {steps.map((item) => (
+              <div
+                key={item.num}
+                className="relative z-10 flex flex-col items-center text-center gap-6 w-full lg:w-1/3"
+              >
+                <div className="w-16 h-16 rounded-full bg-surface neomorph-raised flex items-center justify-center text-2xl font-bold text-primary">
+                  {item.num}
+                </div>
+                <div className="p-6 rounded-2xl bg-surface neomorph-inset w-full">
+                  <h4 className="text-lg font-semibold mb-2">{item.title}</h4>
+                  <p className="text-sm text-on-surface-variant">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section id="pricing" className="max-w-7xl mx-auto px-8 py-24">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-semibold text-on-surface">
+              {t('pricingTitle')}
+            </h2>
+            <p className="mt-4 text-on-surface-variant">{t('freeTrial')}</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                step: '1',
-                title: locale === 'zh-HK' ? '建立帳戶' : 'Create Account',
-                desc: locale === 'zh-HK' ? '30 秒完成註冊，開始設定你的預約頁面。' : 'Sign up in 30 seconds and start setting up your booking page.',
-                emoji: '📝',
-              },
-              {
-                step: '2',
-                title: locale === 'zh-HK' ? '新增服務' : 'Add Services',
-                desc: locale === 'zh-HK' ? '輸入你的服務項目、價錢及營業時間。' : 'Enter your services, prices, and working hours.',
-                emoji: '⚙️',
-              },
-              {
-                step: '3',
-                title: locale === 'zh-HK' ? '分享連結' : 'Share Your Link',
-                desc: locale === 'zh-HK' ? '將預約連結分享到 WhatsApp 或印 QR code 貼在店門。' : 'Share your booking link on WhatsApp or print a QR code for your door.',
-                emoji: '🔗',
-              },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-16 h-16 bg-primary-light rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
-                  {item.emoji}
-                </div>
-                <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-bold mb-3">
-                  {item.step}
-                </div>
-                <h3 className="font-semibold text-secondary mb-2">{item.title}</h3>
-                <p className="text-sm text-muted">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 bg-bg">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">{t('pricingTitle')}</h2>
-          <p className="text-center text-muted mb-12">{t('freeTrial')}</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {/* Starter */}
-            <Card className="relative">
-              <h3 className="font-semibold text-lg mb-1">{t('starterPlan')}</h3>
-              <p className="text-sm text-muted mb-4">{t('starterDesc')}</p>
-              <div className="mb-6">
-                <span className="text-3xl font-bold">{t('starterPrice')}</span>
-                <span className="text-muted">{t('perMonth')}</span>
+            <div className="p-8 rounded-3xl bg-surface neomorph-raised flex flex-col">
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold">{t('starterPlan')}</h3>
+                <div className="mt-4 flex items-baseline">
+                  <span className="text-4xl font-bold text-on-surface">$0</span>
+                  <span className="text-on-surface-variant ml-2">
+                    {t('perMonth')}
+                  </span>
+                </div>
               </div>
-              <ul className="space-y-2 mb-6">
+              <ul className="space-y-4 mb-8 flex-grow">
                 {starterFeatures.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm">
-                    <Check size={16} className="text-emerald-500 flex-shrink-0" />
+                  <li
+                    key={i}
+                    className="flex items-center gap-3 text-on-surface-variant"
+                  >
+                    <Check size={18} className="text-primary flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link href="/auth/signup" className="block">
-                <Button variant="outline" className="w-full">{t('getStarted')}</Button>
+              <Link
+                href="/auth/signup"
+                className="w-full py-3 rounded-xl bg-surface neomorph-inset text-on-surface-variant font-semibold text-center block"
+              >
+                {t('getStarted')}
               </Link>
-            </Card>
+            </div>
 
             {/* Pro */}
-            <Card className="relative border-primary border-2 shadow-lg">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-white text-xs font-medium rounded-full">
-                {locale === 'zh-HK' ? '最受歡迎' : 'Most Popular'}
+            <div className="p-8 rounded-3xl bg-surface neomorph-raised flex flex-col relative scale-105 border-2 border-primary/10">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-xs font-bold rounded-full">
+                {locale === 'zh-HK' ? '最受歡迎' : 'MOST POPULAR'}
               </div>
-              <h3 className="font-semibold text-lg mb-1">{t('proPlan')}</h3>
-              <p className="text-sm text-muted mb-4">{t('proDesc')}</p>
-              <div className="mb-6">
-                <span className="text-3xl font-bold">{t('proPrice')}</span>
-                <span className="text-muted">{t('perMonth')}</span>
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold">{t('proPlan')}</h3>
+                <div className="mt-4 flex items-baseline">
+                  <span className="text-4xl font-bold text-on-surface">
+                    $198
+                  </span>
+                  <span className="text-on-surface-variant ml-2">
+                    {t('perMonth')}
+                  </span>
+                </div>
               </div>
-              <ul className="space-y-2 mb-6">
+              <ul className="space-y-4 mb-8 flex-grow">
                 {proFeatures.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm">
-                    <Check size={16} className="text-emerald-500 flex-shrink-0" />
+                  <li
+                    key={i}
+                    className="flex items-center gap-3 text-on-surface-variant"
+                  >
+                    <Check size={18} className="text-primary flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link href="/auth/signup" className="block">
-                <Button className="w-full">{t('getStarted')}</Button>
+              <Link
+                href="/auth/signup"
+                className="w-full py-3 rounded-xl bg-surface neomorph-raised text-primary font-bold text-center block neomorph-hover transition-all"
+              >
+                {locale === 'zh-HK' ? '升級專業版' : 'Go Pro'}
               </Link>
-            </Card>
+            </div>
 
             {/* Pro + AI */}
-            <Card className="relative">
-              <h3 className="font-semibold text-lg mb-1">{t('proAiPlan')}</h3>
-              <p className="text-sm text-muted mb-4">{t('proAiDesc')}</p>
-              <div className="mb-6">
-                <span className="text-3xl font-bold">{t('proAiPrice')}</span>
-                <span className="text-muted">{t('perMonth')}</span>
+            <div className="p-8 rounded-3xl bg-surface neomorph-raised flex flex-col">
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold">{t('proAiPlan')}</h3>
+                <div className="mt-4 flex items-baseline">
+                  <span className="text-4xl font-bold text-on-surface">
+                    $388
+                  </span>
+                  <span className="text-on-surface-variant ml-2">
+                    {t('perMonth')}
+                  </span>
+                </div>
               </div>
-              <ul className="space-y-2 mb-6">
+              <ul className="space-y-4 mb-8 flex-grow">
                 {proAiFeatures.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm">
-                    <Check size={16} className="text-emerald-500 flex-shrink-0" />
+                  <li
+                    key={i}
+                    className="flex items-center gap-3 text-on-surface-variant"
+                  >
+                    <Check size={18} className="text-accent flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link href="/auth/signup" className="block">
-                <Button variant="outline" className="w-full">{t('getStarted')}</Button>
+              <Link
+                href="/auth/signup"
+                className="w-full py-3 rounded-xl bg-surface neomorph-inset text-accent font-semibold text-center block neomorph-hover transition-all"
+              >
+                {locale === 'zh-HK' ? '升級至 AI 版' : 'Upgrade to AI'}
               </Link>
-            </Card>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-primary to-blue-700">
-        <div className="max-w-3xl mx-auto px-4 text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">
-            {locale === 'zh-HK' ? '準備好告別 WhatsApp 接單混亂？' : 'Ready to stop managing bookings on WhatsApp?'}
-          </h2>
-          <p className="text-blue-100 mb-8 text-lg">
-            {locale === 'zh-HK'
-              ? '免費試用 3 個月，毋須信用卡。今日就開始。'
-              : 'Free 3-month trial, no credit card required. Start today.'}
-          </p>
-          <Link href="/auth/signup">
-            <Button size="lg" className="bg-white text-primary hover:bg-blue-50 text-base px-8">
-              {t('heroCta')} <ArrowRight size={18} />
-            </Button>
-          </Link>
-        </div>
-      </section>
+        {/* CTA */}
+        <section className="max-w-4xl mx-auto px-8 py-24 text-center">
+          <div className="p-16 rounded-[3rem] bg-surface neomorph-raised space-y-10">
+            <h2 className="text-4xl font-semibold text-on-surface leading-tight">
+              {locale === 'zh-HK'
+                ? '準備好告別 WhatsApp 接單混亂？'
+                : 'Ready to stop managing bookings on WhatsApp?'}
+            </h2>
+            <p className="text-xl text-on-surface-variant">
+              {locale === 'zh-HK'
+                ? '加入 500+ 香港商戶，用 BookEasy HK 取回你的時間。'
+                : 'Join 500+ Hong Kong businesses who reclaimed their time with BookEasy HK.'}
+            </p>
+            <div className="flex justify-center">
+              <Link
+                href="/auth/signup"
+                className="px-12 py-5 rounded-2xl bg-surface neomorph-raised text-primary text-xl font-bold neomorph-hover transition-all active:scale-95"
+              >
+                {t('heroCta')}
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* Footer */}
-      <footer className="bg-secondary text-slate-400 py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-              <span className="text-white font-bold text-lg">BookEasy HK</span>
-              <p className="text-sm mt-1">{t('footerTagline')}</p>
-            </div>
-            <div className="flex items-center gap-6 text-sm">
-              <a href="mailto:hello@bookeasyhk.com" className="hover:text-white transition-colors">
-                hello@bookeasyhk.com
-              </a>
-              <span>© 2026 BookEasy HK</span>
-            </div>
+      <footer className="bg-bg border-t border-outline-variant py-12 mt-20">
+        <div className="flex flex-col md:flex-row justify-between items-center w-full px-8 max-w-7xl mx-auto gap-4">
+          <span className="text-lg font-semibold text-on-surface">
+            BookEasy HK
+          </span>
+          <p className="text-sm text-muted">© 2026 BookEasy HK. All rights reserved.</p>
+          <div className="flex gap-8">
+            <a
+              className="text-sm text-muted hover:text-primary transition-colors opacity-80 hover:opacity-100"
+              href="#"
+            >
+              {locale === 'zh-HK' ? '私隱政策' : 'Privacy Policy'}
+            </a>
+            <a
+              className="text-sm text-muted hover:text-primary transition-colors opacity-80 hover:opacity-100"
+              href="#"
+            >
+              {locale === 'zh-HK' ? '服務條款' : 'Terms of Service'}
+            </a>
+            <a
+              className="text-sm text-muted hover:text-primary transition-colors opacity-80 hover:opacity-100"
+              href="mailto:hello@bookeasyhk.com"
+            >
+              {locale === 'zh-HK' ? '聯絡我們' : 'Contact Us'}
+            </a>
           </div>
         </div>
       </footer>
