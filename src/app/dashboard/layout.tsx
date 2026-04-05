@@ -67,7 +67,10 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       >
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="font-bold text-primary text-lg">BookEasy HK</Link>
+            <Link href="/dashboard">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-10 w-auto" />
+            </Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden cursor-pointer">
               <X size={20} />
             </button>
@@ -129,7 +132,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           <button onClick={() => setSidebarOpen(true)} className="cursor-pointer">
             <Menu size={24} />
           </button>
-          <span className="font-bold text-primary">BookEasy HK</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-8 w-auto" />
           <LanguageToggle />
         </header>
 

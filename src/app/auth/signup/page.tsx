@@ -74,7 +74,8 @@ function SignupForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="text-2xl font-bold text-primary">BookEasy HK</h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-12 w-auto mx-auto" />
           </Link>
           <p className="text-muted mt-2">{t('signup')}</p>
         </div>

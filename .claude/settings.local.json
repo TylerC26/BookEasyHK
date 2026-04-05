@@ -10,7 +10,12 @@
       "Bash(npm run:*)",
       "Bash(/usr/local/bin/npm run:*)",
       "Bash(/opt/homebrew/bin/npm run:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//opt/homebrew/lib/node_modules/npm/bin/**)",
+      "Bash(command -v npm)",
+      "Read(//opt/homebrew/Cellar/node/23.11.0/bin/**)",
+      "Read(//Users/tylerc26/.nvm/versions/**)"
     ]
   }
 }

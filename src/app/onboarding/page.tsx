@@ -177,7 +177,8 @@ function OnboardingWizard() {
     <div className="min-h-screen bg-bg py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-xl font-bold text-primary">BookEasy HK</h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-10 w-auto" />
           <LanguageToggle />
         </div>
 

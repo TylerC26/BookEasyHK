@@ -234,7 +234,7 @@ function LandingPage() {
               <Image
                 alt="Dashboard preview showing a clean calendar with booking slots"
                 className="rounded-2xl w-full"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1VztRECsTQaR_O23DayZ2nmMej3WkQgxRcLOWYqabnpGCUjcAtIOjksdhpPfuTSXkfVzivQ1XLG1pQXO7DQ1wA3A0Nd71l8Fgnh02AEPMxbUw3b3B38kHEQv--_lkXSHSIFOaJO2Y4lfob0m-Uwrnkho3BHjaCjqfXrshM6Wdhy_0GQWsxxVE3V-ta5HkNsQBnf8MeqjPdOQw5oqCW6Ke39T9YswKlFoqYgXIEqtDHRkLOsAy6A-X_VRtJ-LZ9Vb12drNAWRao2Lh"
+                src="/newhero.jpeg"
                 width={800}
                 height={500}
               />
@@ -437,9 +437,8 @@ function LandingPage() {
       {/* Footer */}
       <footer className="bg-bg border-t border-outline-variant py-12 mt-20">
         <div className="flex flex-col md:flex-row justify-between items-center w-full px-8 max-w-7xl mx-auto gap-4">
-          <span className="text-lg font-semibold text-on-surface">
-            BookEasy HK
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-10 w-auto" />
           <p className="text-sm text-muted">© 2026 BookEasy HK. All rights reserved.</p>
           <div className="flex gap-8">
             <a

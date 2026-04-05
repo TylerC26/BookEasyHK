@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showManual, setShowManual] = useState(false);
   const [showBlock, setShowBlock] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   // Manual booking form
   const [manualName, setManualName] = useState('');
@@ -221,6 +222,7 @@ export default function DashboardPage() {
                 booking={booking}
                 locale={locale}
                 onUpdateStatus={updateBookingStatus}
+                onSelect={setSelectedBooking}
                 t={t}
               />
             ))}
@@ -245,12 +247,24 @@ export default function DashboardPage() {
                 locale={locale}
                 showDate
                 onUpdateStatus={updateBookingStatus}
+                onSelect={setSelectedBooking}
                 t={t}
               />
             ))}
           </div>
         )}
       </Card>
+
+      {/* Booking Detail Modal */}
+      {selectedBooking && (
+        <BookingDetailModal
+          booking={selectedBooking}
+          locale={locale}
+          onClose={() => setSelectedBooking(null)}
+          onUpdateStatus={(id, status) => { updateBookingStatus(id, status); setSelectedBooking(null); }}
+          t={t}
+        />
+      )}
 
       {/* Manual Booking Modal */}
       {showManual && (
@@ -349,12 +363,14 @@ function BookingRow({
   locale,
   showDate,
   onUpdateStatus,
+  onSelect,
   t,
 }: {
   booking: Booking;
   locale: string;
   showDate?: boolean;
   onUpdateStatus: (id: string, status: string) => void;
+  onSelect: (booking: Booking) => void;
   t: (key: TranslationKey) => string;
 }) {
   const badge = STATUS_BADGE[booking.status];
@@ -365,10 +381,13 @@ function BookingRow({
     : '';
 
   return (
-    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+    <div
+      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors"
+      onClick={() => onSelect(booking)}
+    >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-sm truncate">{booking.customer_name}</span>
+          <span className="font-semibold text-base truncate">{booking.customer_name}</span>
           {booking.is_manual && (
             <Badge variant="muted">
               {locale === 'zh-HK' ? '手動' : 'Manual'}
@@ -378,14 +397,14 @@ function BookingRow({
             {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
           </Badge>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted">
-          {showDate && <span>{format(parseISO(booking.booking_date), 'MMM d')}</span>}
-          <span>{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</span>
-          {serviceName && <span>· {serviceName}</span>}
+        <div className="flex items-center gap-3 mt-0.5">
+          <span className="text-sm font-medium text-on-surface">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</span>
+          {showDate && <span className="text-xs text-muted">{format(parseISO(booking.booking_date), 'MMM d')}</span>}
+          {serviceName && <span className="text-xs text-muted">· {serviceName}</span>}
         </div>
       </div>
       {booking.status === 'confirmed' && (
-        <div className="flex gap-1 ml-2">
+        <div className="flex gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
@@ -416,6 +435,103 @@ function BookingRow({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function BookingDetailModal({
+  booking,
+  locale,
+  onClose,
+  onUpdateStatus,
+  t,
+}: {
+  booking: Booking;
+  locale: string;
+  onClose: () => void;
+  onUpdateStatus: (id: string, status: string) => void;
+  t: (key: TranslationKey) => string;
+}) {
+  const badge = STATUS_BADGE[booking.status];
+  const serviceName = booking.service
+    ? locale === 'zh-HK' && booking.service.name_zh
+      ? booking.service.name_zh
+      : booking.service.name
+    : null;
+
+  const rows: { label: string; value: string }[] = [
+    { label: locale === 'zh-HK' ? '日期' : 'Date', value: format(parseISO(booking.booking_date), 'MMM d, yyyy') },
+    { label: locale === 'zh-HK' ? '時間' : 'Time', value: `${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}` },
+    ...(serviceName ? [{ label: t('service'), value: serviceName }] : []),
+    ...(booking.customer_phone ? [{ label: t('phoneNumber'), value: booking.customer_phone }] : []),
+    ...(booking.customer_whatsapp ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
+    ...(booking.customer_email ? [{ label: 'Email', value: booking.customer_email }] : []),
+    ...(booking.customer_notes ? [{ label: locale === 'zh-HK' ? '備注' : 'Notes', value: booking.customer_notes }] : []),
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between p-6 pb-4">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-semibold">{booking.customer_name}</h3>
+              {booking.is_manual && (
+                <Badge variant="muted">{locale === 'zh-HK' ? '手動' : 'Manual'}</Badge>
+              )}
+              <Badge variant={badge.variant}>
+                {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
+              </Badge>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-secondary cursor-pointer ml-4 mt-0.5">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="px-6 pb-4 space-y-3">
+          {rows.map((row) => (
+            <div key={row.label} className="flex items-start gap-3 text-sm">
+              <span className="text-muted w-20 shrink-0">{row.label}</span>
+              <span className="font-medium">{row.value}</span>
+            </div>
+          ))}
+        </div>
+
+        {booking.status === 'confirmed' && (
+          <div className="flex gap-2 px-6 pb-6 pt-2 border-t border-border mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => onUpdateStatus(booking.id, 'completed')}
+            >
+              <UserCheck size={15} className="text-emerald-600" />
+              {locale === 'zh-HK' ? '完成' : 'Done'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => onUpdateStatus(booking.id, 'no_show')}
+            >
+              <AlertTriangle size={15} className="text-amber-500" />
+              {locale === 'zh-HK' ? '爽約' : 'No-Show'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                if (confirm(t('cancelConfirm'))) onUpdateStatus(booking.id, 'cancelled');
+              }}
+            >
+              <X size={15} className="text-red-500" />
+              {locale === 'zh-HK' ? '取消' : 'Cancel'}
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
