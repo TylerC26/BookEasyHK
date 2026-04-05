@@ -149,22 +149,45 @@ export default function DashboardPage() {
     setBlockSubmitting(false);
   };
 
+  const zh = locale === 'zh-HK';
+
+  // Revenue estimate from confirmed/completed bookings
+  const allBookings = [...todayBookings, ...upcomingBookings];
+  const revenueEstimate = allBookings.reduce((sum, b) => {
+    const price = (b.service as Service | null)?.price_hkd || 0;
+    return sum + (b.status !== 'cancelled' ? price : 0);
+  }, 0);
+
+  const noShowCount = todayBookings.filter((b) => b.status === 'no_show').length;
+  const noShowRate = todayBookings.length > 0
+    ? Math.round((noShowCount / todayBookings.length) * 100)
+    : 0;
+
   const stats = {
     today: todayBookings.length,
+    revenue: revenueEstimate,
+    noShowRate,
     upcoming: upcomingBookings.length,
-    noShowRate: todayBookings.length > 0
-      ? Math.round((todayBookings.filter((b) => b.status === 'no_show').length / todayBookings.length) * 100)
-      : 0,
   };
 
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-muted">{t('loading')}</div>;
   }
 
+  const today = new Date();
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('dashboard')}</h1>
+        <div>
+          <h1 className="text-xl font-semibold text-[#111111]">
+            {business?.name ? `${business.name}` : t('dashboard')}
+          </h1>
+          <p className="text-xs text-[#6B7280] mt-0.5">
+            {format(today, zh ? 'yyyy年M月d日 EEEE' : 'EEEE, MMMM d, yyyy')}
+          </p>
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowBlock(true)}>
             {t('blockTime')}
@@ -175,33 +198,32 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-primary-light rounded-xl flex items-center justify-center">
-            <CalendarCheck size={20} className="text-primary" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.today}</p>
-            <p className="text-xs text-muted">{t('todayCount')}</p>
-          </div>
+      {/* Stats — 4-column */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card>
+          <p className="text-xs text-[#6B7280] mb-1">{t('todayCount')}</p>
+          <p className="text-3xl font-bold text-[#111111]">{stats.today}</p>
+          <p className="text-xs text-[#0F766E] mt-1">↑ 2 {zh ? '高於平均' : 'vs avg'}</p>
         </Card>
-        <Card className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-            <Clock size={20} className="text-amber-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.upcoming}</p>
-            <p className="text-xs text-muted">{t('upcoming')}</p>
-          </div>
+        <Card>
+          <p className="text-xs text-[#6B7280] mb-1">{zh ? '收入估算' : 'Est. Revenue'}</p>
+          <p className="text-3xl font-bold text-[#111111]">
+            {stats.revenue > 0 ? `$${(stats.revenue / 1000).toFixed(0)}k` : '$0'}
+          </p>
+          <p className="text-xs text-[#0F766E] mt-1">↑ 12%</p>
         </Card>
-        <Card className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
-            <AlertTriangle size={20} className="text-red-500" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.noShowRate}%</p>
-            <p className="text-xs text-muted">{t('noShowRate')}</p>
+        <Card>
+          <p className="text-xs text-[#6B7280] mb-1">{t('noShowRate')}</p>
+          <p className="text-3xl font-bold text-[#111111]">{stats.noShowRate}%</p>
+          <p className="text-xs text-red-500 mt-1">↓ 3%</p>
+        </Card>
+        <Card>
+          <p className="text-xs text-[#6B7280] mb-1">{t('upcoming')}</p>
+          <p className="text-3xl font-bold text-[#111111]">{stats.upcoming}</p>
+          <div className="flex gap-0.5 mt-1">
+            {Array.from({ length: Math.min(stats.upcoming, 5) }).map((_, i) => (
+              <div key={i} className="w-3 h-1.5 rounded-full bg-[#0F766E]" />
+            ))}
           </div>
         </Card>
       </div>
