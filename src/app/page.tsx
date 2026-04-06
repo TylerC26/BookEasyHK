@@ -3,184 +3,115 @@
 import { I18nProvider, useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/language-toggle';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Check, Menu, X } from 'lucide-react';
+import { Check, Menu, X, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 
 function LandingPage() {
   const { t, locale } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
+  const zh = locale === 'zh-HK';
 
   const features = [
-    {
-      icon: 'language',
-      title: t('feature1Title'),
-      desc: t('feature1Desc'),
-    },
-    {
-      icon: 'chat_bubble',
-      title: t('feature2Title'),
-      desc: t('feature2Desc'),
-    },
-    {
-      icon: 'install_mobile',
-      title: t('feature3Title'),
-      desc: t('feature3Desc'),
-    },
-    {
-      icon: 'event_busy',
-      title: t('feature4Title'),
-      desc: t('feature4Desc'),
-    },
-    {
-      icon: 'smartphone',
-      title: t('feature5Title'),
-      desc: t('feature5Desc'),
-    },
-    {
-      icon: 'timer',
-      title: t('feature6Title'),
-      desc: t('feature6Desc'),
-    },
+    { icon: '💬', title: zh ? 'WhatsApp 自動提醒' : 'WhatsApp Reminders', desc: zh ? '預約確認後，自動發送24小時及2小時前提醒，大幅減少爽約。' : 'Auto-send WhatsApp reminders 24h and 2h before appointments. Reduce no-shows by 80%.' },
+    { icon: '🈳', title: zh ? '繁體中文介面' : 'Bilingual Interface', desc: zh ? '完整繁體中文及英文雙語，讓客人用最熟悉的語言輕鬆預約。' : 'Full Traditional Chinese and English support for your Hong Kong customers.' },
+    { icon: '⚡', title: zh ? '實時防撞期' : 'Conflict Prevention', desc: zh ? '智能時間管理，自動防止重複預約，輕鬆掌控日程。' : 'Smart scheduling prevents double-bookings and overlapping appointments automatically.' },
+    { icon: '📱', title: zh ? '手機優先設計' : 'Mobile-First Design', desc: zh ? '無需下載App，客人直接在瀏覽器完成預約，適配所有設備。' : 'No app download needed. Customers book directly in any mobile browser.' },
+    { icon: '🔗', title: zh ? '專屬預約連結' : 'Custom Booking Link', desc: zh ? '獲得專屬連結，可放在Instagram、WhatsApp Bio或名片上。' : 'Get your own booking page link to share on Instagram, WhatsApp, or business cards.' },
+    { icon: '📊', title: zh ? 'AI 智能分析' : 'AI Smart Analytics', desc: zh ? '洞察業務趨勢，識別高峰時段，優化服務安排。' : 'Understand your busiest hours and optimize staff scheduling with AI insights.' },
   ];
 
-  const starterFeatures =
-    locale === 'zh-HK'
-      ? ['每月 50 個預約', '標準提醒']
-      : ['Up to 50 bookings/mo', 'Standard Reminders'];
+  const starterFeatures = zh
+    ? ['每月 50 個預約', '基礎提醒功能', '1 個服務項目', '標準預約頁面']
+    : ['50 bookings/month', 'Basic reminders', '1 service type', 'Standard booking page'];
 
-  const proFeatures =
-    locale === 'zh-HK'
-      ? ['無限預約', 'WhatsApp 提醒', '自訂品牌']
-      : ['Unlimited bookings', 'WhatsApp Reminders', 'Custom Branding'];
+  const proFeatures = zh
+    ? ['無限預約', 'WhatsApp 自動提醒', '無限服務項目', '自訂品牌頁面', '優先客服支援']
+    : ['Unlimited bookings', 'WhatsApp auto-reminders', 'Unlimited services', 'Custom branding', 'Priority support'];
 
-  const proAiFeatures =
-    locale === 'zh-HK'
-      ? ['專業版所有功能', 'AI 預約助手', '智能容量分析']
-      : ['Everything in Pro', 'AI Scheduling Assistant', 'Smart Capacity Analytics'];
+  const proAiFeatures = zh
+    ? ['所有 Pro 功能', 'AI 智能排程助手', '智能容量分析', '高級業務洞察', '專屬客戶成功經理']
+    : ['Everything in Pro', 'AI Scheduling Assistant', 'Smart Capacity Analytics', 'Advanced insights', 'Dedicated CSM'];
 
   const steps = [
-    {
-      num: '1',
-      title: locale === 'zh-HK' ? '建立帳戶' : 'Create Account',
-      desc:
-        locale === 'zh-HK'
-          ? '以香港手機號碼或電郵數秒內完成註冊。'
-          : 'Register with your HK mobile number or email in seconds.',
-    },
-    {
-      num: '2',
-      title: locale === 'zh-HK' ? '新增服務' : 'Add Services',
-      desc:
-        locale === 'zh-HK'
-          ? '輸入你的服務項目、價錢及員工排班。'
-          : 'Input your services, prices, and staff availability.',
-    },
-    {
-      num: '3',
-      title: locale === 'zh-HK' ? '分享連結' : 'Share Link',
-      desc:
-        locale === 'zh-HK'
-          ? '將預約連結分享到 Instagram 簡介或 WhatsApp 狀態。'
-          : 'Put your booking link in your Instagram bio or WhatsApp status.',
-    },
+    { num: '01', title: zh ? '建立帳戶' : 'Create Account', desc: zh ? '以電郵數秒內完成註冊，無需信用卡。' : 'Register with your email in seconds. No credit card required.' },
+    { num: '02', title: zh ? '設定服務' : 'Set Up Services', desc: zh ? '輸入服務項目、價錢及營業時間。' : 'Add your services, prices, and opening hours.' },
+    { num: '03', title: zh ? '分享連結' : 'Share Your Link', desc: zh ? '將專屬預約連結分享到 Instagram 或 WhatsApp。' : 'Share your booking link on Instagram Bio or WhatsApp.' },
+  ];
+
+  const stats = [
+    { value: '80%', label: zh ? '減少爽約率' : 'Fewer no-shows' },
+    { value: '30s', label: zh ? '完成設定' : 'Setup time' },
+    { value: '2,400+', label: zh ? '香港商戶' : 'HK businesses' },
   ];
 
   return (
-    <div className="min-h-screen bg-bg text-on-surface">
-      {/* Nav */}
-      <nav className="bg-bg neomorph-raised sticky top-0 z-50">
-        <div className="flex justify-between items-center w-full px-6 md:px-8 py-4 max-w-7xl mx-auto">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/bookeasy-logo.svg"
-            alt="BookEasy HK"
-            className="h-14 w-auto"
-          />
-          {/* Desktop nav links */}
+    <div className="min-h-screen bg-[#FAFAF8] text-[#111111]">
+
+      {/* ── NAV ── */}
+      <nav className="bg-white border-b border-[#E5E7EB] sticky top-0 z-50">
+        <div className="flex justify-between items-center w-full px-6 md:px-12 py-0 max-w-7xl mx-auto h-16">
+          <span className="font-display text-xl font-light tracking-tight text-[#111111]">
+            BookEasy<span className="text-[#0F766E]">.</span>
+          </span>
+
+          {/* Desktop links */}
           <div className="hidden md:flex gap-8 items-center">
-            <a
-              className="text-primary border-b-2 border-primary font-semibold py-1"
-              href="#features"
-            >
-              {locale === 'zh-HK' ? '功能' : 'Features'}
-            </a>
-            <a
-              className="text-muted hover:text-primary transition-colors py-1"
-              href="#how-it-works"
-            >
-              {locale === 'zh-HK' ? '使用方法' : 'How it Works'}
-            </a>
-            <a
-              className="text-muted hover:text-primary transition-colors py-1"
-              href="#pricing"
-            >
-              {locale === 'zh-HK' ? '定價' : 'Pricing'}
-            </a>
+            {[
+              [zh ? '功能' : 'Features', '#features'],
+              [zh ? '使用方法' : 'How it Works', '#how-it-works'],
+              [zh ? '收費' : 'Pricing', '#pricing'],
+            ].map(([label, href]) => (
+              <a key={href} href={href} className="text-sm text-[#6B7280] hover:text-[#111111] transition-colors">
+                {label}
+              </a>
+            ))}
           </div>
-          {/* Desktop auth buttons */}
+
+          {/* Desktop CTA */}
           <div className="hidden md:flex gap-3 items-center">
             <LanguageToggle />
-            <Link
-              href="/auth/login"
-              className="px-6 py-2 rounded-xl text-muted font-medium neomorph-hover transition-all active:scale-95 duration-200"
-            >
+            <Link href="/auth/login" className="px-4 py-2 text-sm text-[#3D3D3D] border border-[#E5E7EB] rounded-lg hover:border-[#0F766E] transition-colors">
               {t('login')}
             </Link>
-            <Link
-              href="/auth/signup"
-              className="px-6 py-2 rounded-xl bg-surface neomorph-raised text-primary font-semibold neomorph-hover transition-all active:scale-95 duration-200"
-            >
-              {t('heroCta')}
+            <Link href="/auth/signup" className="px-4 py-2 text-sm text-white bg-[#0F766E] rounded-lg font-medium hover:bg-[#0D9488] transition-colors">
+              {t('heroCta')} →
             </Link>
           </div>
-          {/* Mobile right side */}
+
+          {/* Mobile */}
           <div className="flex md:hidden items-center gap-2">
             <LanguageToggle />
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="w-10 h-10 rounded-xl bg-surface neomorph-raised flex items-center justify-center text-primary"
-              aria-label="Toggle menu"
+              className="w-9 h-9 rounded-lg border border-[#E5E7EB] flex items-center justify-center text-[#6B7280]"
             >
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
+              {menuOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
           </div>
         </div>
-        {/* Mobile dropdown menu */}
+
+        {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden px-6 pb-5 space-y-2 border-t border-outline-variant bg-[#d4d6dc]">
-            <a
-              href="#features"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl text-primary font-semibold neomorph-inset mt-4"
-            >
-              {locale === 'zh-HK' ? '功能' : 'Features'}
-            </a>
-            <a
-              href="#how-it-works"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl text-muted font-medium hover:text-primary transition-colors"
-            >
-              {locale === 'zh-HK' ? '使用方法' : 'How it Works'}
-            </a>
-            <a
-              href="#pricing"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl text-muted font-medium hover:text-primary transition-colors"
-            >
-              {locale === 'zh-HK' ? '定價' : 'Pricing'}
-            </a>
-            <div className="pt-2 flex flex-col gap-2">
-              <Link
-                href="/auth/login"
-                className="w-full py-3 rounded-xl text-center text-muted font-medium neomorph-inset"
+          <div className="md:hidden px-6 pb-4 space-y-1 border-t border-[#E5E7EB] bg-white">
+            {[
+              [zh ? '功能' : 'Features', '#features'],
+              [zh ? '使用方法' : 'How it Works', '#how-it-works'],
+              [zh ? '收費' : 'Pricing', '#pricing'],
+            ].map(([label, href]) => (
+              <a
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2.5 text-sm text-[#6B7280] hover:text-[#111111] rounded-lg hover:bg-[#F9FAFB] transition-colors mt-1"
               >
+                {label}
+              </a>
+            ))}
+            <div className="pt-3 flex flex-col gap-2 border-t border-[#E5E7EB]">
+              <Link href="/auth/login" className="py-2.5 text-sm text-center text-[#3D3D3D] border border-[#E5E7EB] rounded-lg">
                 {t('login')}
               </Link>
-              <Link
-                href="/auth/signup"
-                className="w-full py-3 rounded-xl text-center bg-surface neomorph-raised text-primary font-semibold"
-              >
+              <Link href="/auth/signup" className="py-2.5 text-sm text-center text-white bg-[#0F766E] rounded-lg font-medium">
                 {t('heroCta')}
               </Link>
             </div>
@@ -189,276 +120,286 @@ function LandingPage() {
       </nav>
 
       <main>
-        {/* Hero */}
-        <section className="max-w-7xl mx-auto px-8 py-24 flex flex-col lg:flex-row items-center gap-16">
-          <div className="lg:w-1/2 space-y-8">
-            <div className="inline-block px-4 py-1.5 rounded-full bg-surface neomorph-inset text-primary font-medium text-sm">
-              {locale === 'zh-HK'
-                ? '✨ 為香港中小企而設的 AI 排程'
-                : '✨ AI-Powered Scheduling for HK SMBs'}
+        {/* ── HERO ── */}
+        <section className="max-w-7xl mx-auto px-6 md:px-12 pt-20 pb-16">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left */}
+            <div className="space-y-7 animate-fade-up">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#CCFBF1] text-[#0F766E] text-xs font-semibold tracking-wide uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E]" />
+                {zh ? '香港中小企預約平台' : 'HK Appointment Platform'}
+              </div>
+
+              <h1 className="font-display text-5xl lg:text-6xl font-light leading-[1.1] tracking-tight text-[#111111]">
+                {zh ? (
+                  <>讓客人<br /><em className="text-[#0F766E] not-italic">輕鬆預約，</em><br />讓你省心管理。</>
+                ) : (
+                  <>Bookings that<br /><em className="text-[#0F766E] not-italic">run themselves.</em></>
+                )}
+              </h1>
+
+              <p className="text-[15px] leading-relaxed text-[#6B7280] max-w-md">
+                {zh
+                  ? '專為香港美容、美甲、寵物護理等行業設計。30秒完成設定，自動WhatsApp提醒，大幅減少爽約率。'
+                  : 'Designed for Hong Kong salons, spas, and service businesses. Set up in 30 seconds. WhatsApp reminders sent automatically.'}
+              </p>
+
+              <div className="flex flex-wrap gap-3 pt-1">
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#0F766E] text-white text-sm font-medium rounded-lg hover:bg-[#0D9488] transition-colors"
+                >
+                  {zh ? '免費試用 14 天' : 'Start free 14-day trial'}
+                  <ArrowRight size={14} />
+                </Link>
+                <a
+                  href="#features"
+                  className="inline-flex items-center gap-2 px-6 py-3 text-[#3D3D3D] text-sm border border-[#E5E7EB] rounded-lg hover:border-[#0F766E] transition-colors"
+                >
+                  {zh ? '觀看示範' : 'See how it works'}
+                </a>
+              </div>
+
+              <p className="text-xs text-[#9CA3AF]">
+                {zh ? '無需信用卡 · 即時啟用 · 隨時取消' : 'No credit card · Instant setup · Cancel anytime'}
+              </p>
             </div>
-            <h1 className="text-5xl lg:text-7xl font-semibold text-on-surface tracking-tight leading-tight">
-              {locale === 'zh-HK' ? (
-                <>
-                  告別在{' '}
-                  <span className="text-primary">WhatsApp</span>{' '}
-                  接單混亂
-                </>
-              ) : (
-                <>
-                  Stop Managing Bookings on{' '}
-                  <span className="text-primary">WhatsApp</span>
-                </>
-              )}
-            </h1>
-            <p className="text-xl text-on-surface-variant max-w-xl">
-              {t('heroSubtitle')}
-            </p>
-            <div className="flex flex-wrap gap-6 pt-4">
-              <Link
-                href="/auth/signup"
-                className="px-10 py-4 rounded-xl bg-surface neomorph-raised text-primary text-lg font-semibold neomorph-hover transition-all active:scale-95"
-              >
-                {t('heroCta')}
-              </Link>
-              <a
-                href="#features"
-                className="px-10 py-4 rounded-xl bg-surface neomorph-inset text-on-surface-variant text-lg font-medium"
-              >
-                {t('heroSecondaryCta')}
-              </a>
-            </div>
-          </div>
-          <div className="lg:w-1/2 w-full">
-            <div className="p-4 rounded-3xl bg-surface neomorph-raised">
-              <Image
-                alt="Dashboard preview showing a clean calendar with booking slots"
-                className="rounded-2xl w-full"
-                src="/newhero.jpeg"
-                width={800}
-                height={500}
-              />
+
+            {/* Right: Mock booking card */}
+            <div className="relative animate-fade-up" style={{ animationDelay: '0.1s' }}>
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-elevated">
+                {/* Card header */}
+                <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[#E5E7EB]">
+                  <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] flex items-center justify-center text-lg">💅</div>
+                  <div>
+                    <div className="text-sm font-semibold text-[#111111]">Star Nail Studio</div>
+                    <div className="text-xs text-[#6B7280]">{zh ? '旺角 · 開放預約中' : 'Mong Kok · Now accepting bookings'}</div>
+                  </div>
+                  <div className="ml-auto w-2 h-2 rounded-full bg-[#10b981]" />
+                </div>
+
+                {/* Services */}
+                <div className="space-y-2 mb-4">
+                  {[
+                    { name: zh ? '法式凝膠甲' : 'French Gel Nails', dur: zh ? '90分鐘' : '90 min', price: 'HK$380', selected: true },
+                    { name: zh ? '卸甲 + 基礎護理' : 'Removal + Care', dur: zh ? '45分鐘' : '45 min', price: 'HK$180', selected: false },
+                    { name: zh ? '手部保養' : 'Hand Treatment', dur: zh ? '30分鐘' : '30 min', price: 'HK$120', selected: false },
+                  ].map((svc) => (
+                    <div
+                      key={svc.name}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+                        svc.selected
+                          ? 'border-[#0F766E] bg-[#CCFBF1]'
+                          : 'border-[#E5E7EB] bg-white hover:border-[#0F766E]'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium text-[#111111]">{svc.name}</div>
+                        <div className="text-xs text-[#6B7280]">{svc.dur}</div>
+                      </div>
+                      <div className="font-semibold text-[#111111]">{svc.price}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/auth/signup"
+                  className="block w-full text-center py-2.5 bg-[#0F766E] text-white text-sm font-medium rounded-lg hover:bg-[#0D9488] transition-colors"
+                >
+                  {zh ? '選擇日期和時間 →' : 'Choose date & time →'}
+                </Link>
+              </div>
+
+              {/* Floating badge */}
+              <div className="absolute -top-3 -right-3 bg-[#111111] text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-elevated">
+                {zh ? '爽約率 ↓ 80%' : '80% fewer no-shows'}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Features */}
-        <section id="features" className="max-w-7xl mx-auto px-8 py-24">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-semibold text-on-surface">
-              {t('featuresTitle')}
-            </h2>
-            <p className="text-on-surface-variant max-w-2xl mx-auto">
-              {locale === 'zh-HK'
-                ? '專為香港小商戶量身打造，一站式預約管理平台。'
-                : 'The all-in-one platform designed specifically for the unique needs of local businesses in Hong Kong.'}
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((f, i) => (
-              <div
-                key={i}
-                className="p-8 rounded-3xl bg-surface neomorph-inset flex flex-col gap-4"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-surface neomorph-raised flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined">{f.icon}</span>
-                </div>
-                <h3 className="text-xl font-semibold text-on-surface">
-                  {f.title}
-                </h3>
-                <p className="text-on-surface-variant">{f.desc}</p>
+        {/* ── STATS ── */}
+        <section className="max-w-7xl mx-auto px-6 md:px-12 pb-16">
+          <div className="grid grid-cols-3 divide-x divide-[#E5E7EB] border border-[#E5E7EB] rounded-xl bg-white overflow-hidden">
+            {stats.map(({ value, label }) => (
+              <div key={label} className="py-6 px-8 text-center">
+                <div className="font-display text-4xl font-light text-[#0F766E] mb-1">{value}</div>
+                <div className="text-sm text-[#6B7280]">{label}</div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* How it Works */}
-        <section
-          id="how-it-works"
-          className="max-w-7xl mx-auto px-8 py-24 bg-surface-bright rounded-[3rem] neomorph-raised my-12"
-        >
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-semibold text-on-surface">
-              {locale === 'zh-HK' ? '三步即可開始' : 'Get Started in 3 Steps'}
-            </h2>
-          </div>
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-12 relative">
-            <div className="hidden lg:block absolute top-1/4 left-0 w-full h-0.5 bg-outline-variant neomorph-inset" />
-            {steps.map((item) => (
-              <div
-                key={item.num}
-                className="relative z-10 flex flex-col items-center text-center gap-6 w-full lg:w-1/3"
-              >
-                <div className="w-16 h-16 rounded-full bg-surface neomorph-raised flex items-center justify-center text-2xl font-bold text-primary">
-                  {item.num}
-                </div>
-                <div className="p-6 rounded-2xl bg-surface neomorph-inset w-full">
-                  <h4 className="text-lg font-semibold mb-2">{item.title}</h4>
-                  <p className="text-sm text-on-surface-variant">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Pricing */}
-        <section id="pricing" className="max-w-7xl mx-auto px-8 py-24">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-semibold text-on-surface">
-              {t('pricingTitle')}
-            </h2>
-            <p className="mt-4 text-on-surface-variant">{t('freeTrial')}</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Starter */}
-            <div className="p-8 rounded-3xl bg-surface neomorph-raised flex flex-col">
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold">{t('starterPlan')}</h3>
-                <div className="mt-4 flex items-baseline">
-                  <span className="text-4xl font-bold text-on-surface">$0</span>
-                  <span className="text-on-surface-variant ml-2">
-                    {t('perMonth')}
-                  </span>
-                </div>
-              </div>
-              <ul className="space-y-4 mb-8 flex-grow">
-                {starterFeatures.map((f, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-3 text-on-surface-variant"
-                  >
-                    <Check size={18} className="text-primary flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/auth/signup"
-                className="w-full py-3 rounded-xl bg-surface neomorph-inset text-on-surface-variant font-semibold text-center block"
-              >
-                {t('getStarted')}
-              </Link>
+        {/* ── FEATURES ── */}
+        <section id="features" className="bg-[#FAFAF8] border-y border-[#E5E7EB] py-20">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="mb-12">
+              <p className="text-xs font-semibold tracking-widest text-[#0F766E] uppercase mb-2">
+                {zh ? '核心功能' : 'Core Features'}
+              </p>
+              <h2 className="font-display text-4xl font-light text-[#111111] max-w-md leading-tight">
+                {zh ? '一切你需要的，\n一個平台搞定。' : 'Everything you need,\nin one place.'}
+              </h2>
             </div>
 
-            {/* Pro */}
-            <div className="p-8 rounded-3xl bg-surface neomorph-raised flex flex-col relative scale-105 border-2 border-primary/10">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-xs font-bold rounded-full">
-                {locale === 'zh-HK' ? '最受歡迎' : 'MOST POPULAR'}
-              </div>
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold">{t('proPlan')}</h3>
-                <div className="mt-4 flex items-baseline">
-                  <span className="text-4xl font-bold text-on-surface">
-                    $198
-                  </span>
-                  <span className="text-on-surface-variant ml-2">
-                    {t('perMonth')}
-                  </span>
+            {/* Feature grid with border pattern */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-[#E5E7EB] rounded-xl overflow-hidden bg-white">
+              {features.map((f, i) => (
+                <div
+                  key={i}
+                  className={`p-7 ${i % 3 !== 2 ? 'md:border-r' : ''} ${i < 3 ? 'border-b' : ''} border-[#E5E7EB]`}
+                >
+                  <div className="w-9 h-9 rounded-lg bg-[#CCFBF1] flex items-center justify-center text-base mb-4">
+                    {f.icon}
+                  </div>
+                  <h3 className="text-sm font-semibold text-[#111111] mb-2">{f.title}</h3>
+                  <p className="text-sm leading-relaxed text-[#6B7280]">{f.desc}</p>
                 </div>
-              </div>
-              <ul className="space-y-4 mb-8 flex-grow">
-                {proFeatures.map((f, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-3 text-on-surface-variant"
-                  >
-                    <Check size={18} className="text-primary flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/auth/signup"
-                className="w-full py-3 rounded-xl bg-surface neomorph-raised text-primary font-bold text-center block neomorph-hover transition-all"
-              >
-                {locale === 'zh-HK' ? '升級專業版' : 'Go Pro'}
-              </Link>
-            </div>
-
-            {/* Pro + AI */}
-            <div className="p-8 rounded-3xl bg-surface neomorph-raised flex flex-col">
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold">{t('proAiPlan')}</h3>
-                <div className="mt-4 flex items-baseline">
-                  <span className="text-4xl font-bold text-on-surface">
-                    $388
-                  </span>
-                  <span className="text-on-surface-variant ml-2">
-                    {t('perMonth')}
-                  </span>
-                </div>
-              </div>
-              <ul className="space-y-4 mb-8 flex-grow">
-                {proAiFeatures.map((f, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-3 text-on-surface-variant"
-                  >
-                    <Check size={18} className="text-accent flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/auth/signup"
-                className="w-full py-3 rounded-xl bg-surface neomorph-inset text-accent font-semibold text-center block neomorph-hover transition-all"
-              >
-                {locale === 'zh-HK' ? '升級至 AI 版' : 'Upgrade to AI'}
-              </Link>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="max-w-4xl mx-auto px-8 py-24 text-center">
-          <div className="p-16 rounded-[3rem] bg-surface neomorph-raised space-y-10">
-            <h2 className="text-4xl font-semibold text-on-surface leading-tight">
-              {locale === 'zh-HK'
-                ? '準備好告別 WhatsApp 接單混亂？'
-                : 'Ready to stop managing bookings on WhatsApp?'}
+        {/* ── HOW IT WORKS ── */}
+        <section id="how-it-works" className="py-20">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="mb-12">
+              <p className="text-xs font-semibold tracking-widest text-[#0F766E] uppercase mb-2">
+                {zh ? '如何開始' : 'Getting Started'}
+              </p>
+              <h2 className="font-display text-4xl font-light text-[#111111]">
+                {zh ? '三步即可開始' : 'Get started in 3 steps'}
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {steps.map((step) => (
+                <div key={step.num} className="bg-white border border-[#E5E7EB] rounded-xl p-6">
+                  <div className="font-display text-5xl font-light text-[#0F766E] mb-4 leading-none">{step.num}</div>
+                  <h3 className="text-base font-semibold text-[#111111] mb-2">{step.title}</h3>
+                  <p className="text-sm leading-relaxed text-[#6B7280]">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── PRICING ── */}
+        <section id="pricing" className="bg-[#FAFAF8] border-t border-[#E5E7EB] py-20">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="mb-12">
+              <p className="text-xs font-semibold tracking-widest text-[#0F766E] uppercase mb-2">
+                {zh ? '收費方案' : 'Pricing'}
+              </p>
+              <h2 className="font-display text-4xl font-light text-[#111111]">
+                {zh ? '透明收費，按需選擇。' : 'Simple, transparent pricing.'}
+              </h2>
+              <p className="text-sm text-[#6B7280] mt-2">{t('freeTrial')}</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-5">
+              {/* Starter */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-7 flex flex-col">
+                <div className="text-xs font-semibold tracking-widest text-[#6B7280] uppercase mb-2">{t('starterPlan')}</div>
+                <div className="font-display text-5xl font-light text-[#111111] leading-none mb-1">$0</div>
+                <div className="text-xs text-[#6B7280] mb-6">{t('perMonth')}</div>
+                <ul className="space-y-2.5 mb-8 flex-grow">
+                  {starterFeatures.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-[#3D3D3D]">
+                      <Check size={14} className="text-[#0F766E] mt-0.5 flex-shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/auth/signup" className="block w-full py-2.5 text-sm text-center text-[#3D3D3D] border border-[#E5E7EB] rounded-lg hover:border-[#0F766E] transition-colors">
+                  {t('getStarted')}
+                </Link>
+              </div>
+
+              {/* Pro — featured */}
+              <div className="bg-[#111111] border border-[#111111] rounded-2xl p-7 flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#0F766E] text-white text-[10px] font-bold uppercase tracking-widest rounded-b-full">
+                  {zh ? '最多人選擇' : 'Most Popular'}
+                </div>
+                <div className="text-xs font-semibold tracking-widest text-white/50 uppercase mb-2 mt-4">{t('proPlan')}</div>
+                <div className="font-display text-5xl font-light text-white leading-none mb-1">$198</div>
+                <div className="text-xs text-white/40 mb-6">{zh ? '每月 · HKD' : '/month HKD'}</div>
+                <ul className="space-y-2.5 mb-8 flex-grow">
+                  {proFeatures.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-white/70">
+                      <Check size={14} className="text-[#0D9488] mt-0.5 flex-shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/auth/signup" className="block w-full py-2.5 text-sm text-center text-white bg-[#0F766E] rounded-lg font-medium hover:bg-[#0D9488] transition-colors">
+                  {zh ? '免費試用 14 天' : 'Start free trial'}
+                </Link>
+              </div>
+
+              {/* Pro + AI */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-7 flex flex-col">
+                <div className="text-xs font-semibold tracking-widest text-[#6B7280] uppercase mb-2">{t('proAiPlan')}</div>
+                <div className="font-display text-5xl font-light text-[#111111] leading-none mb-1">$388</div>
+                <div className="text-xs text-[#6B7280] mb-6">{zh ? '每月 · HKD' : '/month HKD'}</div>
+                <ul className="space-y-2.5 mb-8 flex-grow">
+                  {proAiFeatures.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-[#3D3D3D]">
+                      <Check size={14} className="text-[#0F766E] mt-0.5 flex-shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/auth/signup" className="block w-full py-2.5 text-sm text-center text-[#3D3D3D] border border-[#E5E7EB] rounded-lg hover:border-[#0F766E] transition-colors">
+                  {zh ? '聯絡我們' : 'Contact us'}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FINAL CTA ── */}
+        <section className="py-24">
+          <div className="max-w-3xl mx-auto px-6 md:px-12 text-center">
+            <h2 className="font-display text-5xl font-light text-[#111111] leading-tight mb-5">
+              {zh ? '準備好開始了嗎？' : 'Ready to get started?'}
             </h2>
-            <p className="text-xl text-on-surface-variant">
-              {locale === 'zh-HK'
-                ? '加入 500+ 香港商戶，用 BookEasy HK 取回你的時間。'
-                : 'Join 500+ Hong Kong businesses who reclaimed their time with BookEasy HK.'}
+            <p className="text-[#6B7280] mb-8 text-base">
+              {zh
+                ? '加入 2,400+ 香港商戶，用 BookEasy HK 取回你的時間。'
+                : 'Join 2,400+ Hong Kong businesses who simplified their booking with BookEasy HK.'}
             </p>
-            <div className="flex justify-center">
-              <Link
-                href="/auth/signup"
-                className="px-12 py-5 rounded-2xl bg-surface neomorph-raised text-primary text-xl font-bold neomorph-hover transition-all active:scale-95"
-              >
-                {t('heroCta')}
-              </Link>
-            </div>
+            <Link
+              href="/auth/signup"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-[#0F766E] text-white font-medium rounded-xl text-sm hover:bg-[#0D9488] transition-colors"
+            >
+              {zh ? '免費試用 14 天' : 'Start free 14-day trial'}
+              <ArrowRight size={15} />
+            </Link>
+            <p className="text-xs text-[#9CA3AF] mt-4">
+              {zh ? '無需信用卡 · 即時啟用 · 隨時取消' : 'No credit card · Instant setup · Cancel anytime'}
+            </p>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-bg border-t border-outline-variant py-12 mt-20">
-        <div className="flex flex-col md:flex-row justify-between items-center w-full px-8 max-w-7xl mx-auto gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-10 w-auto" />
-          <p className="text-sm text-muted">© 2026 BookEasy HK. All rights reserved.</p>
-          <div className="flex gap-8">
-            <a
-              className="text-sm text-muted hover:text-primary transition-colors opacity-80 hover:opacity-100"
-              href="#"
-            >
-              {locale === 'zh-HK' ? '私隱政策' : 'Privacy Policy'}
-            </a>
-            <a
-              className="text-sm text-muted hover:text-primary transition-colors opacity-80 hover:opacity-100"
-              href="#"
-            >
-              {locale === 'zh-HK' ? '服務條款' : 'Terms of Service'}
-            </a>
-            <a
-              className="text-sm text-muted hover:text-primary transition-colors opacity-80 hover:opacity-100"
-              href="mailto:hello@bookeasyhk.com"
-            >
-              {locale === 'zh-HK' ? '聯絡我們' : 'Contact Us'}
-            </a>
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-[#E5E7EB] py-10 bg-white">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-4">
+          <span className="font-display text-lg font-light text-[#111111]">
+            BookEasy<span className="text-[#0F766E]">.</span>
+          </span>
+          <p className="text-xs text-[#9CA3AF]">© 2026 BookEasy HK. All rights reserved.</p>
+          <div className="flex gap-6">
+            {[
+              [zh ? '私隱政策' : 'Privacy', '#'],
+              [zh ? '服務條款' : 'Terms', '#'],
+              [zh ? '聯絡我們' : 'Contact', 'mailto:hello@bookeasyhk.com'],
+            ].map(([label, href]) => (
+              <a key={label} href={href} className="text-xs text-[#6B7280] hover:text-[#0F766E] transition-colors">
+                {label}
+              </a>
+            ))}
           </div>
         </div>
       </footer>

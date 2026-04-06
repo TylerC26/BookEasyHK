@@ -5,37 +5,26 @@ import { LanguageToggle } from '@/components/language-toggle';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Clock, Settings, ExternalLink, LogOut, Menu, X } from 'lucide-react';
+import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { Business } from '@/lib/types';
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const zh = locale === 'zh-HK';
   const router = useRouter();
   const pathname = usePathname();
   const [business, setBusiness] = useState<Business | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    loadBusiness();
-  }, []);
+  useEffect(() => { loadBusiness(); }, []);
 
   const loadBusiness = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    const { data } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('owner_id', user.id)
-      .single();
-
-    if (!data) {
-      router.push('/onboarding');
-      return;
-    }
-
+    const { data } = await supabase.from('businesses').select('*').eq('owner_id', user.id).single();
+    if (!data) { router.push('/onboarding'); return; }
     setBusiness(data);
   };
 
@@ -48,39 +37,50 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/dashboard', label: t('todaySchedule'), icon: Calendar, exact: true },
-    { href: '/dashboard/bookings', label: t('allBookings'), icon: Clock },
+    { href: '/dashboard/bookings', label: t('allBookings'), icon: List },
     { href: '/dashboard/settings', label: t('settings'), icon: Settings },
   ];
 
+  const initials = business?.name
+    ? business.name.slice(0, 1).toUpperCase()
+    : '?';
+
   return (
-    <div className="min-h-screen bg-bg flex">
-      {/* Mobile sidebar overlay */}
+    <div className="min-h-screen bg-[#FAFAF8] flex">
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      {/* Sidebar */}
+      {/* ── SIDEBAR ── */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-border flex flex-col transform transition-transform lg:transform-none ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-56 bg-[#111111] flex flex-col transform transition-transform lg:transform-none ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="p-4 border-b border-border">
+        {/* Logo */}
+        <div className="px-5 py-5 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-10 w-auto" />
+            <Link href="/dashboard" className="font-display text-[17px] font-light text-white">
+              BookEasy<span className="text-[#0D9488]">.</span>
             </Link>
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden cursor-pointer">
-              <X size={20} />
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/40 hover:text-white/70 transition-colors">
+              <X size={16} />
             </button>
           </div>
           {business && (
-            <p className="text-xs text-muted mt-1 truncate">{business.name}</p>
+            <p className="text-[11px] text-white/40 mt-1 truncate">{business.name}</p>
           )}
         </div>
 
-        <nav className="flex-1 p-3 space-y-1">
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4">
+          <div className="text-[10px] font-semibold tracking-widest text-white/25 uppercase px-2 mb-2">
+            {zh ? '主選單' : 'Main'}
+          </div>
           {navItems.map((item) => {
             const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
@@ -88,56 +88,76 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm mb-0.5 transition-colors border-l-2 ${
                   isActive
-                    ? 'bg-primary-light text-primary'
-                    : 'text-muted hover:bg-slate-50 hover:text-secondary'
+                    ? 'bg-white/6 text-white border-[#0D9488]'
+                    : 'text-white/50 hover:text-white/70 hover:bg-white/4 border-transparent'
                 }`}
               >
-                <item.icon size={18} />
+                <item.icon size={15} />
                 {item.label}
               </Link>
             );
           })}
 
           {business && (
-            <a
-              href={`/book/${business.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted hover:bg-slate-50 hover:text-secondary transition-colors"
-            >
-              <ExternalLink size={18} />
-              {t('bookingPage')}
-            </a>
+            <>
+              <div className="text-[10px] font-semibold tracking-widest text-white/25 uppercase px-2 mb-2 mt-4">
+                {zh ? '快捷' : 'Quick'}
+              </div>
+              <a
+                href={`/book/${business.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white/70 hover:bg-white/4 transition-colors border-l-2 border-transparent"
+              >
+                <ExternalLink size={15} />
+                {t('bookingPage')}
+              </a>
+            </>
           )}
         </nav>
 
-        <div className="p-3 border-t border-border space-y-2">
-          <LanguageToggle className="w-full" />
+        {/* Bottom */}
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <div className="px-3 py-2">
+            <LanguageToggle className="w-full" />
+          </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted hover:bg-red-50 hover:text-danger transition-colors w-full cursor-pointer"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-white/40 hover:text-red-400 hover:bg-white/4 transition-colors w-full"
           >
-            <LogOut size={18} />
+            <LogOut size={15} />
             {t('logout')}
           </button>
+
+          {/* User info */}
+          <div className="flex items-center gap-2.5 px-3 py-2 mt-2 border-t border-white/10 pt-3">
+            <div className="w-7 h-7 rounded-lg bg-[#0F766E] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] text-white/60 font-medium truncate">{business?.name || '…'}</div>
+              <div className="text-[10px] text-white/30">{zh ? '商戶管理員' : 'Business Admin'}</div>
+            </div>
+          </div>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ── MAIN CONTENT ── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden bg-white border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-30">
-          <button onClick={() => setSidebarOpen(true)} className="cursor-pointer">
-            <Menu size={24} />
+        <header className="lg:hidden bg-white border-b border-[#E5E7EB] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+          <button onClick={() => setSidebarOpen(true)} className="text-[#6B7280] hover:text-[#111111] transition-colors">
+            <Menu size={20} />
           </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-8 w-auto" />
+          <span className="font-display text-base font-light text-[#111111]">
+            BookEasy<span className="text-[#0F766E]">.</span>
+          </span>
           <LanguageToggle />
         </header>
 
-        <main className="flex-1 p-4 lg:p-8 max-w-5xl">
+        <main className="flex-1 p-5 lg:p-8">
           {children}
         </main>
       </div>
