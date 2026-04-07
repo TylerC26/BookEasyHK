@@ -12,9 +12,7 @@ import { Select } from '@/components/ui/select';
 import { formatPrice, formatTime, addMinutesToTime } from '@/lib/utils';
 import type { Booking, Business, Service } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
-import { CalendarCheck, Clock, AlertTriangle, ChevronRight, Image as ImageIcon, Plus, X, UserCheck } from 'lucide-react';
-
-const OWNER_NOTE_BUCKET = 'booking-owner-notes';
+import { CalendarCheck, Clock, AlertTriangle, ChevronRight, Plus, X, UserCheck } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' | 'danger' | 'muted'; label_zh: string; label_en: string }> = {
   pending: { variant: 'warning', label_zh: '待確認', label_en: 'Pending' },
@@ -128,7 +126,7 @@ export default function DashboardPage() {
 
   const updateBookingOwnerDetails = async (
     bookingId: string,
-    fields: Pick<Booking, 'owner_notes' | 'owner_image_url'>
+    fields: Pick<Booking, 'owner_notes'>
   ) => {
     const supabase = createClient();
     await supabase.from('bookings').update(fields).eq('id', bookingId);
@@ -475,7 +473,7 @@ function BookingRow({
               {locale === 'zh-HK' ? '有備注' : 'Has Notes'}
             </Badge>
           )}
-          {(booking.owner_notes || booking.owner_image_url) && (
+          {booking.owner_notes && (
             <Badge variant="muted">
               {locale === 'zh-HK' ? '店主備注' : 'Owner Note'}
             </Badge>
@@ -542,7 +540,7 @@ function BookingDetailModal({
   onUpdateAmount: (id: string, price_hkd: number | null) => Promise<void>;
   onUpdateOwnerDetails: (
     bookingId: string,
-    fields: Pick<Booking, 'owner_notes' | 'owner_image_url'>
+    fields: Pick<Booking, 'owner_notes'>
   ) => Promise<void>;
   t: (key: TranslationKey) => string;
 }) {
@@ -557,15 +555,11 @@ function BookingDetailModal({
   );
   const [savingAmount, setSavingAmount] = useState(false);
   const [ownerNotes, setOwnerNotes] = useState(booking.owner_notes ?? '');
-  const [ownerImageUrl, setOwnerImageUrl] = useState(booking.owner_image_url ?? '');
-  const [ownerImageFile, setOwnerImageFile] = useState<File | null>(null);
   const [savingOwnerDetails, setSavingOwnerDetails] = useState(false);
 
   useEffect(() => {
     setPriceInput(booking.price_hkd ?? booking.service?.price_hkd ?? null);
     setOwnerNotes(booking.owner_notes ?? '');
-    setOwnerImageUrl(booking.owner_image_url ?? '');
-    setOwnerImageFile(null);
   }, [booking]);
 
   const rows: { label: string; value: string }[] = [
@@ -591,34 +585,9 @@ function BookingDetailModal({
     setSavingOwnerDetails(true);
 
     try {
-      let nextImageUrl = ownerImageUrl.trim() || null;
-
-      if (ownerImageFile) {
-        const supabase = createClient();
-        const fileExt = ownerImageFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-        const fileName = `${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `${booking.business_id}/${booking.id}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from(OWNER_NOTE_BUCKET)
-          .upload(filePath, ownerImageFile, { upsert: true });
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage
-          .from(OWNER_NOTE_BUCKET)
-          .getPublicUrl(filePath);
-
-        nextImageUrl = data.publicUrl;
-      }
-
       await onUpdateOwnerDetails(booking.id, {
         owner_notes: ownerNotes.trim() || null,
-        owner_image_url: nextImageUrl,
       });
-
-      setOwnerImageUrl(nextImageUrl ?? '');
-      setOwnerImageFile(null);
     } finally {
       setSavingOwnerDetails(false);
     }
@@ -694,31 +663,6 @@ function BookingDetailModal({
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor={`booking-owner-image-${booking.id}`} className="block text-xs font-medium text-[#3D3D3D]">
-                {locale === 'zh-HK' ? '店主圖片' : 'Owner Image'}
-              </label>
-              <input
-                id={`booking-owner-image-${booking.id}`}
-                type="file"
-                accept="image/*"
-                onChange={(e) => setOwnerImageFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-[#3D3D3D] file:mr-3 file:h-9 file:rounded-lg file:border-0 file:bg-[#F3F4F6] file:px-3.5 file:text-sm file:font-medium file:text-[#3D3D3D] hover:file:bg-[#E5E7EB]"
-              />
-              {ownerImageFile && (
-                <p className="text-xs text-[#6B7280]">{ownerImageFile.name}</p>
-              )}
-              {ownerImageUrl && (
-                <div className="rounded-xl border border-border p-2 bg-slate-50">
-                  <img
-                    src={ownerImageUrl}
-                    alt={locale === 'zh-HK' ? '店主上傳圖片' : 'Owner uploaded image'}
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
-                </div>
-              )}
-            </div>
-
             <div className="flex justify-end">
               <Button
                 size="sm"
@@ -726,7 +670,6 @@ function BookingDetailModal({
                 onClick={saveOwnerDetails}
                 loading={savingOwnerDetails}
               >
-                <ImageIcon size={15} />
                 {locale === 'zh-HK' ? '儲存備注' : 'Save Notes'}
               </Button>
             </div>

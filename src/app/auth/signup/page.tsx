@@ -48,9 +48,9 @@ function SignupForm() {
     return (
       <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center px-6">
         <div className="text-center max-w-sm">
-          <div className="w-14 h-14 rounded-full bg-[#CCFBF1] flex items-center justify-center mx-auto mb-5">
-            <span className="text-2xl">📧</span>
-          </div>
+          <Link href="/" className="inline-block font-display text-2xl font-light text-[#111111] mb-5">
+            BookEasy<span className="text-[#0F766E]">.</span>
+          </Link>
           <h2 className="text-2xl font-semibold text-[#111111] mb-2">{t('signupSuccess')}</h2>
           <p className="text-sm text-[#6B7280] mb-6">
             {zh ? '請查看你的電郵，點擊驗證連結後繼續。' : 'Please check your email and click the verification link to continue.'}

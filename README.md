@@ -1,5 +1,35 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Supabase Setup
+
+Create a `.env.local` file with:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+Then run the SQL in [`supabase-schema.sql`](/Users/tylerc26/Dev/BookEasyHK/supabase-schema.sql) inside the Supabase SQL Editor.
+
+### Storage Setup For Business Images
+
+The app is now prepared for a public storage bucket named `business-images` with:
+
+- max file size: `5 MB`
+- allowed types: `image/jpeg`, `image/png`, `image/webp`
+- path format: `{businessId}/{kind}/{uuid}-{filename}`
+- supported kinds: `logo`, `storefront`
+
+The storage helper lives in [`src/lib/supabase/storage.ts`](/Users/tylerc26/Dev/BookEasyHK/src/lib/supabase/storage.ts) and can be reused when the upload UI is added later.
+
+After you apply the schema, verify in Supabase:
+
+1. Open `Storage` and confirm the `business-images` bucket exists.
+2. Check that the bucket is `Public`.
+3. Open `Policies` for `storage.objects` and confirm the business image policies were created.
+4. Test with an authenticated owner account later by uploading only into that business's folder prefix.
+
 ## Getting Started
 
 First, run the development server:

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/input';
+import { parseBusinessSocialLinks } from '@/lib/business-profile';
 import { I18nProvider, useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/language-toggle';
 import { formatPrice, formatTime, addMinutesToTime, timeToMinutes, getBusinessTypeEmoji } from '@/lib/utils';
@@ -13,13 +14,20 @@ import {
   startOfMonth, endOfMonth, eachDayOfInterval, getDay,
   addMonths, subMonths, isSameDay, isSameMonth,
 } from 'date-fns';
-import { Check, ChevronLeft, ChevronRight, Calendar, ArrowRight, Clock, MapPin, Phone } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Calendar, ArrowRight, Clock, MapPin, Phone, ExternalLink } from 'lucide-react';
 
 type BookingStep = 'service' | 'datetime' | 'details' | 'confirm' | 'done';
 
 // ── Step indicator ──────────────────────────────────────────────────────────
 const STEP_LABELS_ZH = ['選擇服務', '選擇時間', '填寫資料', '確認預約'];
 const STEP_LABELS_EN = ['Service', 'Date & Time', 'Details', 'Confirm'];
+
+const SOCIAL_LABELS = {
+  instagram: 'Instagram',
+  threads: 'Threads',
+  facebook: 'Facebook',
+  other: 'Link',
+} as const;
 
 function StepIndicator({ step, zh }: { step: BookingStep; zh: boolean }) {
   const STEPS: BookingStep[] = ['service', 'datetime', 'details', 'confirm'];
@@ -165,6 +173,9 @@ function SummaryPanel({
   selectedTime: string;
   zh: boolean;
 }) {
+  const socialLinks = parseBusinessSocialLinks(business.social_links);
+  const socialEntries = Object.entries(socialLinks).filter(([, url]) => Boolean(url));
+
   return (
     <div className="space-y-3 sticky top-24">
       {/* Selected booking */}
@@ -206,6 +217,34 @@ function SummaryPanel({
         <p className="text-xs font-semibold tracking-wide text-[#6B7280] uppercase mb-1">
           {zh ? '商戶資料' : 'Business'}
         </p>
+        {business.business_image_url && (
+          <div className="overflow-hidden rounded-xl border border-[#E5E7EB]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={business.business_image_url}
+              alt={business.name}
+              className="h-36 w-full object-cover"
+            />
+          </div>
+        )}
+        {business.address_map_link && (
+          <a
+            href={business.address_map_link}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 text-xs text-[#0F766E] hover:underline"
+          >
+            <MapPin size={12} className="flex-shrink-0" />
+            <span>{zh ? '查看 Google 地圖' : 'Open in Google Maps'}</span>
+            <ExternalLink size={12} className="flex-shrink-0" />
+          </a>
+        )}
+        {business.address_text && (
+          <div className="flex items-start gap-2 text-xs text-[#3D3D3D]">
+            <MapPin size={12} className="mt-0.5 text-[#0F766E] flex-shrink-0" />
+            <span>{business.address_text}</span>
+          </div>
+        )}
         {business.district && (
           <div className="flex items-center gap-2 text-xs text-[#3D3D3D]">
             <MapPin size={12} className="text-[#0F766E] flex-shrink-0" />
@@ -222,6 +261,27 @@ function SummaryPanel({
           <Clock size={12} className="text-[#0F766E] flex-shrink-0" />
           <span>{zh ? '11:00 – 20:00' : '11:00 – 20:00'}</span>
         </div>
+        {socialEntries.length > 0 && (
+          <div className="pt-1">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">
+              {zh ? '社交媒體' : 'Social'}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {socialEntries.map(([platform, url]) => (
+                <a
+                  key={platform}
+                  href={url as string}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-[#D1FAE5] bg-[#ECFDF5] px-2.5 py-1 text-[11px] font-medium text-[#0F766E] hover:bg-[#D1FAE5]"
+                >
+                  <span>{SOCIAL_LABELS[platform as keyof typeof SOCIAL_LABELS]}</span>
+                  <ExternalLink size={11} />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -403,9 +463,16 @@ function BookingFlow() {
       <div className="bg-white border-b border-[#E5E7EB] sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#CCFBF1] flex items-center justify-center text-base">
-              {getBusinessTypeEmoji(business?.type || '')}
-            </div>
+            {business?.business_image_url ? (
+              <div className="w-9 h-9 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={business.business_image_url} alt={business.name} className="h-full w-full object-cover" />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-[#CCFBF1] flex items-center justify-center text-base">
+                {getBusinessTypeEmoji(business?.type || '')}
+              </div>
+            )}
             <div>
               <h1 className="text-sm font-semibold text-[#111111] leading-tight">{business?.name}</h1>
               {business?.district && (

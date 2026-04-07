@@ -13,10 +13,14 @@ CREATE TABLE businesses (
   name TEXT NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('nail', 'hair', 'carwash', 'pet', 'massage', 'beauty', 'other')),
   district TEXT,
+  address_text TEXT,
+  address_map_link TEXT,
   phone TEXT,
   whatsapp TEXT,
   slug TEXT UNIQUE NOT NULL,
   logo_url TEXT,
+  business_image_url TEXT,
+  social_links JSONB,
   buffer_minutes INT DEFAULT 0,
   min_advance_hours INT DEFAULT 2,
   max_advance_days INT DEFAULT 30,
@@ -165,6 +169,50 @@ CREATE POLICY "public_read_blocked" ON blocked_times
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('booking-owner-notes', 'booking-owner-notes', true)
 ON CONFLICT (id) DO NOTHING;
+
+-- Storage bucket for business logos and storefront images
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'business-images',
+  'business-images',
+  true,
+  5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE
+SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+CREATE POLICY "public_read_business_images" ON storage.objects
+  FOR SELECT
+  USING (bucket_id = 'business-images');
+
+CREATE POLICY "owners_upload_business_images" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'business-images'
+    AND auth.uid()::text = split_part(name, '/', 1)
+  );
+
+CREATE POLICY "owners_update_business_images" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'business-images'
+    AND auth.uid()::text = split_part(name, '/', 1)
+  )
+  WITH CHECK (
+    bucket_id = 'business-images'
+    AND auth.uid()::text = split_part(name, '/', 1)
+  );
+
+CREATE POLICY "owners_delete_business_images" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'business-images'
+    AND auth.uid()::text = split_part(name, '/', 1)
+  );
 
 CREATE POLICY "owners_upload_booking_note_images" ON storage.objects
   FOR INSERT TO authenticated

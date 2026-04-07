@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { AddressMapPicker } from '@/components/address-map-picker';
 import { I18nProvider, useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/language-toggle';
+import { uploadBusinessImage } from '@/lib/business-images';
+import { buildBusinessSocialLinks, EMPTY_SOCIAL_LINKS, normalizeOptionalUrl } from '@/lib/business-profile';
 import { generateSlug } from '@/lib/utils';
-import type { BusinessType } from '@/lib/types';
-import { Check, Plus, Trash2 } from 'lucide-react';
+import type { BusinessSocialLinks, BusinessType } from '@/lib/types';
+import { Check, ImagePlus, Plus, Trash2, Upload, X } from 'lucide-react';
 
 const DISTRICTS = [
   'Central & Western', 'Wan Chai', 'Eastern', 'Southern',
@@ -51,8 +54,15 @@ function OnboardingWizard() {
   const [businessName, setBusinessName] = useState('');
   const [businessType, setBusinessType] = useState<BusinessType>('nail');
   const [district, setDistrict] = useState('Yau Tsim Mong');
+  const [addressText, setAddressText] = useState('');
+  const [addressMapLink, setAddressMapLink] = useState('');
+  const [addressLabel, setAddressLabel] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [businessImageFile, setBusinessImageFile] = useState<File | null>(null);
+  const [businessImagePreviewUrl, setBusinessImagePreviewUrl] = useState('');
+  const [socialLinks, setSocialLinks] = useState<BusinessSocialLinks>(EMPTY_SOCIAL_LINKS);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   // Step 2
   const [services, setServices] = useState<ServiceDraft[]>([
@@ -109,6 +119,30 @@ function OnboardingWizard() {
     setHours(updated);
   };
 
+  const updateSocialLink = (platform: keyof BusinessSocialLinks, value: string) => {
+    setSocialLinks((current) => ({
+      ...current,
+      [platform]: value,
+    }));
+  };
+
+  const handleBusinessImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setBusinessImageFile(file);
+    setBusinessImagePreviewUrl(URL.createObjectURL(file));
+    setError('');
+  };
+
+  const clearBusinessImage = () => {
+    setBusinessImageFile(null);
+    setBusinessImagePreviewUrl('');
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  };
+
   const handleComplete = async () => {
     setLoading(true);
     setError('');
@@ -118,6 +152,11 @@ function OnboardingWizard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      let businessImageUrl: string | null = null;
+      if (businessImageFile) {
+        businessImageUrl = await uploadBusinessImage(supabase, user.id, businessImageFile);
+      }
+
       const { data: business, error: bizError } = await supabase
         .from('businesses')
         .insert({
@@ -125,9 +164,13 @@ function OnboardingWizard() {
           name: businessName,
           type: businessType,
           district,
+          address_text: addressText.trim() || null,
+          address_map_link: normalizeOptionalUrl(addressMapLink),
           phone,
           whatsapp: whatsapp || phone,
           slug: slug || generateSlug(businessName),
+          business_image_url: businessImageUrl,
+          social_links: buildBusinessSocialLinks(socialLinks),
           onboarding_complete: true,
           language: locale,
         })
@@ -177,8 +220,9 @@ function OnboardingWizard() {
     <div className="min-h-screen bg-bg py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bookeasy-logo.svg" alt="BookEasy HK" className="h-10 w-auto" />
+          <span className="font-display text-2xl font-light text-[#111111]">
+            BookEasy<span className="text-[#0F766E]">.</span>
+          </span>
           <LanguageToggle />
         </div>
 
@@ -224,6 +268,23 @@ function OnboardingWizard() {
                 options={districtOptions}
               />
               <Input
+                id="addressText"
+                label={t('manualAddress')}
+                value={addressText}
+                onChange={(e) => setAddressText(e.target.value)}
+                placeholder={locale === 'zh-HK' ? '例：旺角XX中心12樓1203室' : 'e.g. Unit 1203, 12/F, XX Centre, Mong Kok'}
+                hint={locale === 'zh-HK' ? '可加入房號、樓層、大廈名稱等資料' : 'Include room number, floor, building name, etc.'}
+              />
+              <AddressMapPicker
+                id="addressMapLink"
+                label={t('address')}
+                locale={locale}
+                value={addressMapLink}
+                onChange={setAddressMapLink}
+                selectedLabel={addressLabel}
+                onSelectedLabelChange={setAddressLabel}
+              />
+              <Input
                 id="phone"
                 label={t('phone')}
                 type="tel"
@@ -240,6 +301,90 @@ function OnboardingWizard() {
                 placeholder="+852 9XXX XXXX"
                 hint={locale === 'zh-HK' ? '如與電話號碼相同可留空' : 'Leave blank if same as phone'}
               />
+              <div className="space-y-1.5">
+                <p className="block text-xs font-medium text-[#3D3D3D]">{t('businessImage')}</p>
+                <input
+                  ref={imageInputRef}
+                  id="businessImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBusinessImageChange}
+                  className="hidden"
+                />
+                {businessImagePreviewUrl ? (
+                  <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={businessImagePreviewUrl}
+                      alt={businessName || 'Business preview'}
+                      className="h-40 w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="flex h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#D1D5DB] bg-white text-sm text-[#6B7280] transition-colors hover:border-[#0F766E] hover:text-[#0F766E]"
+                  >
+                    <ImagePlus size={20} />
+                    <span>{locale === 'zh-HK' ? '上傳商戶圖片' : 'Upload business image'}</span>
+                  </button>
+                )}
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => imageInputRef.current?.click()}>
+                    <Upload size={14} />
+                    {businessImagePreviewUrl
+                      ? (locale === 'zh-HK' ? '更換圖片' : 'Replace Image')
+                      : (locale === 'zh-HK' ? '選擇圖片' : 'Choose Image')}
+                  </Button>
+                  {businessImagePreviewUrl && (
+                    <Button type="button" variant="ghost" onClick={clearBusinessImage}>
+                      <X size={14} />
+                      {locale === 'zh-HK' ? '移除圖片' : 'Remove Image'}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-[#6B7280]">
+                  {locale === 'zh-HK' ? '支援 JPG、PNG、WebP，大小不超過 5MB。' : 'Supports JPG, PNG, and WebP up to 5MB.'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[#E5E7EB] p-4 space-y-4">
+                <p className="text-sm font-medium text-[#111111]">{t('socialMedia')}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    id="instagram"
+                    label={t('instagram')}
+                    type="url"
+                    value={socialLinks.instagram || ''}
+                    onChange={(e) => updateSocialLink('instagram', e.target.value)}
+                    placeholder="https://instagram.com/yourbusiness"
+                  />
+                  <Input
+                    id="threads"
+                    label={t('threads')}
+                    type="url"
+                    value={socialLinks.threads || ''}
+                    onChange={(e) => updateSocialLink('threads', e.target.value)}
+                    placeholder="https://threads.net/@yourbusiness"
+                  />
+                  <Input
+                    id="facebook"
+                    label={t('facebook')}
+                    type="url"
+                    value={socialLinks.facebook || ''}
+                    onChange={(e) => updateSocialLink('facebook', e.target.value)}
+                    placeholder="https://facebook.com/yourbusiness"
+                  />
+                  <Input
+                    id="otherLink"
+                    label={t('otherLink')}
+                    type="url"
+                    value={socialLinks.other || ''}
+                    onChange={(e) => updateSocialLink('other', e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
             </div>
             <div className="mt-6 flex justify-end">
               <Button onClick={handleNext} disabled={!businessName.trim()}>

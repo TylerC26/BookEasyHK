@@ -1,5 +1,12 @@
 export type BusinessType = 'nail' | 'hair' | 'carwash' | 'pet' | 'massage' | 'beauty' | 'other';
 
+export interface BusinessSocialLinks {
+  instagram?: string | null;
+  threads?: string | null;
+  facebook?: string | null;
+  other?: string | null;
+}
+
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'no_show' | 'cancelled';
 
 export interface Business {
@@ -8,10 +15,14 @@ export interface Business {
   name: string;
   type: BusinessType;
   district: string | null;
+  address_text: string | null;
+  address_map_link: string | null;
   phone: string | null;
   whatsapp: string | null;
   slug: string;
   logo_url: string | null;
+  business_image_url: string | null;
+  social_links: BusinessSocialLinks | null;
   buffer_minutes: number;
   min_advance_hours: number;
   max_advance_days: number;
@@ -87,8 +98,12 @@ export interface OnboardingData {
   businessName: string;
   businessType: BusinessType;
   district: string;
+  addressText: string;
+  addressMapLink: string;
   phone: string;
   whatsapp: string;
+  businessImageUrl: string;
+  socialLinks: BusinessSocialLinks;
   slug: string;
   services: Array<{
     name: string;
