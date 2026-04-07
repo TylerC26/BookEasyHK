@@ -1,0 +1,156 @@
+BookEasy HK
+Brand Visual Guide
+
+Overview
+
+BookEasy HK uses a quiet premium visual system that blends hospitality
+softness with SaaS clarity. The customer-facing UI is light, airy, and
+calm, while the merchant dashboard introduces a darker operational mode.
+The result feels polished, locally aware, bilingual, and mobile-first.
+
+
+1. Visual Direction
+
+Core feel:
+- Calm
+- Premium
+- Practical
+- Editorial
+- Mobile-first
+- Bilingual
+- Locally tailored to Hong Kong service businesses
+
+Visual character:
+- Soft ivory backgrounds instead of harsh white-only layouts
+- White cards with light borders and restrained shadows
+- Teal as the main trust and action color
+- Dark charcoal used for contrast, seriousness, and dashboard framing
+- Serif headlines paired with modern sans-serif interface text
+
+
+2. Typography
+
+Primary display font:
+- Fraunces, Georgia, serif
+
+Primary body font:
+- Plus Jakarta Sans
+- Noto Sans TC for Traditional Chinese support
+- System sans-serif fallbacks
+
+Brand effect:
+- Fraunces gives the product elegance and a more editorial personality
+- Plus Jakarta Sans keeps the interface modern, readable, and clean
+- Noto Sans TC helps the bilingual UI feel intentional and legible
+
+Typical type sizes used in the UI:
+- Hero heading: text-5xl on mobile, text-6xl on large screens
+- Section headings: text-4xl
+- Dashboard and settings page titles: text-2xl bold
+- Body copy: around 14px to 15px
+- Small labels and helper text: 12px
+- Utility metadata and compact UI labels: 10px to 11px
+
+Typography behavior:
+- Hero headlines use light weight
+- Tracking is tight for headlines
+- Headline line-height is around 1.1
+- Body text is neutral, clear, and easy to scan
+
+
+3. Color Palette
+
+Primary brand colors:
+- Primary: #0F766E
+- Primary Hover: #0D9488
+- Primary Light: #CCFBF1
+- Primary Mid: #14B8A6
+
+Neutral colors:
+- Ink: #111111
+- Ink 2: #3D3D3D
+- Muted Text: #6B7280
+- Border: #E5E7EB
+- Border Subtle: #F3F4F6
+- Background: #FAFAF8
+- Surface: #FFFFFF
+
+Semantic colors:
+- Success: #10B981
+- Success Light: #D1FAE5
+- Danger: #EF4444
+- Warning: #D97706
+- Warning Light: #FEF3C7
+
+Palette interpretation:
+- Teal communicates trust, freshness, and product action
+- Ivory and white keep the interface soft and premium
+- Dark ink tones add seriousness and strong readability
+- Semantic colors are used sparingly for states and feedback
+
+
+4. Component Styling
+
+Cards:
+- Usually white with a soft border
+- Border radius commonly 12px or 16px
+- Light shadows only
+
+Buttons:
+- Rounded rectangles with a clean, modern feel
+- Primary buttons use teal fills with white text
+- Secondary buttons often use white backgrounds with border outlines
+
+Borders and surfaces:
+- Thin light-gray borders are preferred over heavy fills
+- Surfaces feel layered through spacing and subtle elevation
+
+Focus and interaction:
+- Focus uses a teal outline
+- Hover states are handled with restrained color shifts
+
+
+5. Layout Style
+
+Landing page:
+- Large editorial headline on the left
+- Compact product preview or booking card on the right
+- Generous whitespace
+- Bordered feature grids and clean section rhythm
+
+Booking flow:
+- White cards on soft background
+- Teal progress states
+- Clear step-based structure
+- Calm and customer-friendly presentation
+
+Dashboard:
+- Dark sidebar
+- Light main content area
+- Admin-oriented structure without losing the overall brand feel
+
+
+6. Motion
+
+Animation style:
+- Understated
+- Functional
+- Polished rather than flashy
+
+Defined motion:
+- Fade up: 0.5s ease
+- Fade in: 0.4s ease
+
+Motion purpose:
+- Support clarity
+- Add polish
+- Keep the experience feeling lightweight
+
+
+7. Brand Summary
+
+BookEasy HK presents itself as quiet premium booking software for Hong
+Kong service businesses. The UI combines editorial elegance with clean
+product structure, making it feel trustworthy to customers and reliable
+to operators. It sits between hospitality and software rather than
+leaning too far into either one.

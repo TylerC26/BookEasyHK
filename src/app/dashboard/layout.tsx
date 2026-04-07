@@ -5,7 +5,7 @@ import { LanguageToggle } from '@/components/language-toggle';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X } from 'lucide-react';
+import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X, Building2, BriefcaseBusiness } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { Business } from '@/lib/types';
 
@@ -17,8 +17,6 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const [business, setBusiness] = useState<Business | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => { loadBusiness(); }, []);
-
   const loadBusiness = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -27,6 +25,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     if (!data) { router.push('/onboarding'); return; }
     setBusiness(data);
   };
+
+  useEffect(() => { loadBusiness(); }, []);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -38,7 +38,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/dashboard', label: t('todaySchedule'), icon: Calendar, exact: true },
     { href: '/dashboard/bookings', label: t('allBookings'), icon: List },
-    { href: '/dashboard/settings', label: t('settings'), icon: Settings },
+    { href: '/dashboard/settings/business', label: zh ? '商戶' : 'Business', icon: Building2 },
+    { href: '/dashboard/settings/services', label: zh ? '服務' : 'Services', icon: BriefcaseBusiness },
   ];
 
   const initials = business?.name
@@ -120,6 +121,18 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Bottom */}
         <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <Link
+            href="/dashboard/settings"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors w-full ${
+              pathname === '/dashboard/settings'
+                ? 'bg-white/6 text-white border-l-2 border-[#0D9488]'
+                : 'text-white/50 hover:text-white/70 hover:bg-white/4 border-l-2 border-transparent'
+            }`}
+          >
+            <Settings size={15} />
+            {zh ? '網站設定' : 'Website Settings'}
+          </Link>
           <div className="px-3 py-2">
             <LanguageToggle className="w-full" />
           </div>

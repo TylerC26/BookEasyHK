@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BookEasy HK Brand Visual Guide</title>
+  <style>
+    :root {
+      --primary: #0F766E;
+      --primary-hover: #0D9488;
+      --primary-light: #CCFBF1;
+      --primary-mid: #14B8A6;
+      --ink: #111111;
+      --ink-2: #3D3D3D;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+      --surface: #FFFFFF;
+      --bg: #FAFAF8;
+      --success: #10B981;
+      --danger: #EF4444;
+      --warning: #D97706;
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Plus Jakarta Sans", "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    .page {
+      padding: 18px 0 0;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fffd 100%);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px 30px 26px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 16px;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 34px;
+      font-weight: 300;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      max-width: 540px;
+    }
+
+    .hero-accent {
+      color: var(--primary);
+      font-style: normal;
+    }
+
+    .hero-copy {
+      margin-top: 12px;
+      max-width: 610px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .hero-meta {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .meta-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+
+    .meta-value {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 26px;
+      font-weight: 300;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .meta-label {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .card h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 25px;
+      font-weight: 300;
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+
+    .intro {
+      font-size: 13px;
+      color: var(--ink-2);
+      margin-bottom: 16px;
+    }
+
+    .spec-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .spec-row {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .spec-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .spec-value {
+      font-size: 13px;
+      color: var(--ink-2);
+    }
+
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .swatch {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .swatch-color {
+      height: 56px;
+    }
+
+    .swatch-info {
+      padding: 10px 12px 12px;
+    }
+
+    .swatch-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+
+    .swatch-hex {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    }
+
+    .full-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .mini-title {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .body-copy {
+      font-size: 13px;
+      color: var(--ink-2);
+      margin: 0;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--ink-2);
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <span class="eyebrow">BookEasy HK Brand Guide</span>
+      <h1>Quiet premium booking software for Hong Kong service businesses, with an <span class="hero-accent">editorial, bilingual, mobile-first</span> visual language.</h1>
+      <p class="hero-copy">
+        BookEasy HK combines calm hospitality cues with dependable SaaS structure. The customer-facing UI feels soft,
+        polished, and approachable, while the merchant dashboard introduces darker contrast and operational clarity.
+      </p>
+      <div class="hero-meta">
+        <div class="meta-card">
+          <div class="meta-value">Fraunces</div>
+          <div class="meta-label">Display typeface for elegant editorial headlines</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-value">Teal</div>
+          <div class="meta-label">Primary trust and action color anchored at #0F766E</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-value">A4</div>
+          <div class="meta-label">System summary formatted for easy sharing and review</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-grid">
+      <div class="card">
+        <h2>Typography</h2>
+        <p class="intro">
+          The brand personality comes from the tension between a refined serif headline system and a practical, highly readable sans-serif body system.
+        </p>
+        <div class="spec-list">
+          <div class="spec-row">
+            <div class="spec-label">Display Font</div>
+            <div class="spec-value">Fraunces, Georgia, serif</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Body Font</div>
+            <div class="spec-value">Plus Jakarta Sans, Noto Sans TC, system sans-serif fallbacks</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Hero Heading</div>
+            <div class="spec-value">Text size: 5xl on mobile, 6xl on large screens. Weight: light. Tracking: tight. Line-height: approximately 1.1.</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Section Headings</div>
+            <div class="spec-value">Usually 4xl in the display font, maintaining a soft editorial hierarchy.</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Page Titles</div>
+            <div class="spec-value">Commonly 2xl bold in the product dashboard and settings screens.</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Body Copy</div>
+            <div class="spec-value">Typically set between 14px and 15px, with supporting labels at 12px and utility metadata at 10px to 11px.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Color Palette</h2>
+        <p class="intro">
+          Teal carries trust, motion, and product action. Warm ivory and white surfaces keep the interface calm, clean, and premium.
+        </p>
+        <div class="palette">
+          <div class="swatch">
+            <div class="swatch-color" style="background:#0F766E;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Primary</div>
+              <div class="swatch-hex">#0F766E</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#0D9488;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Primary Hover</div>
+              <div class="swatch-hex">#0D9488</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#CCFBF1;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Primary Light</div>
+              <div class="swatch-hex">#CCFBF1</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#14B8A6;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Primary Mid</div>
+              <div class="swatch-hex">#14B8A6</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#111111;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Ink</div>
+              <div class="swatch-hex">#111111</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#3D3D3D;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Ink 2</div>
+              <div class="swatch-hex">#3D3D3D</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#6B7280;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Muted</div>
+              <div class="swatch-hex">#6B7280</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#E5E7EB;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Border</div>
+              <div class="swatch-hex">#E5E7EB</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#FAFAF8;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Background</div>
+              <div class="swatch-hex">#FAFAF8</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#FFFFFF;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Surface</div>
+              <div class="swatch-hex">#FFFFFF</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#10B981;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Success</div>
+              <div class="swatch-hex">#10B981</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#EF4444;"></div>
+            <div class="swatch-info">
+              <div class="swatch-name">Danger</div>
+              <div class="swatch-hex">#EF4444</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="full-card">
+      <h2>Visual Language</h2>
+      <div class="two-col">
+        <div>
+          <div class="mini-title">UI Structure</div>
+          <p class="body-copy">
+            Customer-facing surfaces use soft ivory backgrounds, white cards, thin gray borders, rounded corners, and restrained elevation. The dashboard contrasts this with a dark sidebar and light work area, giving the system a more professional operator mode without breaking the wider brand.
+          </p>
+
+          <div class="mini-title" style="margin-top:14px;">Component Style</div>
+          <p class="body-copy">
+            Cards typically use 12px to 16px radii. Buttons lean on rounded large rectangles with teal fills or outlined neutral treatments. Borders are preferred over heavy fills, and shadows stay subtle to preserve a light, polished feel.
+          </p>
+        </div>
+
+        <div>
+          <div class="mini-title">Layout Direction</div>
+          <p class="body-copy">
+            The interface relies on generous spacing, editorial-scale headlines, compact product cards, and structured bordered grids. The booking flow preserves calm white surfaces and teal progress states, while pricing and feature sections use simple modular blocks instead of decorative noise.
+          </p>
+
+          <div class="mini-title" style="margin-top:14px;">Motion</div>
+          <p class="body-copy">
+            Animation is intentionally understated. Fade-up enters at roughly 0.5 seconds, fade-in at roughly 0.4 seconds. Motion supports clarity and polish rather than spectacle.
+          </p>
+        </div>
+      </div>
+
+      <div class="chip-row">
+        <span class="chip">Editorial Serif Headlines</span>
+        <span class="chip">Clean Sans UI</span>
+        <span class="chip">Teal Trust Signals</span>
+        <span class="chip">Soft Ivory Backgrounds</span>
+        <span class="chip">Bilingual Ready</span>
+        <span class="chip">Mobile-First</span>
+        <span class="chip">Quiet Premium</span>
+      </div>
+
+      <div class="footer-note">
+        Brand summary: BookEasy HK presents itself as calm, premium, locally aware booking software. It sits between hospitality and SaaS, giving small Hong Kong service businesses a system that feels elegant to customers and dependable to operators.
+      </div>
+    </section>
+  </div>
+</body>
+</html>
