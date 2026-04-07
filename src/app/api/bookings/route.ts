@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { sendBookingConfirmation, sendOwnerBookingAlert } from '@/lib/whatsapp';
+import { sendBookingRequestReceived, sendOwnerBookingAlert } from '@/lib/whatsapp';
 import { addMinutesToTime } from '@/lib/utils';
-import { format } from 'date-fns';
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,13 +84,25 @@ export async function POST(request: NextRequest) {
         booking_date,
         start_time,
         end_time,
-        status: 'confirmed',
+        status: 'pending',
       })
       .select()
       .single();
 
     if (error) {
       console.error('[Booking] Insert error:', error);
+      if (
+        error.code === '23514' ||
+        error.message?.includes('status') ||
+        error.message?.includes('check constraint')
+      ) {
+        return NextResponse.json(
+          {
+            error: 'Booking status schema is outdated. Apply the pending-bookings database migration first.',
+          },
+          { status: 500 }
+        );
+      }
       return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
     }
 
@@ -106,7 +117,7 @@ export async function POST(request: NextRequest) {
     if (business) {
       const wa = customer_whatsapp || customer_phone;
       if (wa) {
-        sendBookingConfirmation(wa, {
+        sendBookingRequestReceived(wa, {
           businessName: business.name,
           serviceName,
           date: booking_date,

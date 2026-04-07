@@ -78,7 +78,7 @@ CREATE TABLE bookings (
   booking_date DATE NOT NULL,
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
-  status TEXT DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'completed', 'no_show', 'cancelled')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'no_show', 'cancelled')),
   is_manual BOOLEAN DEFAULT FALSE,
   reminder_24h_sent BOOLEAN DEFAULT FALSE,
   reminder_2h_sent BOOLEAN DEFAULT FALSE,

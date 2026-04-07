@@ -9,12 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { formatTime, formatPrice, addMinutesToTime } from '@/lib/utils';
+import { formatTime, addMinutesToTime } from '@/lib/utils';
 import type { Booking, Business, Service } from '@/lib/types';
-import { format, isToday, isTomorrow, isAfter, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { CalendarCheck, Clock, AlertTriangle, Plus, X, UserCheck } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' | 'danger' | 'muted'; label_zh: string; label_en: string }> = {
+  pending: { variant: 'warning', label_zh: '待確認', label_en: 'Pending' },
   confirmed: { variant: 'default', label_zh: '已確認', label_en: 'Confirmed' },
   completed: { variant: 'success', label_zh: '已完成', label_en: 'Completed' },
   no_show: { variant: 'danger', label_zh: '爽約', label_en: 'No-Show' },
@@ -77,7 +78,7 @@ export default function DashboardPage() {
       .select('*, service:services(*)')
       .eq('business_id', biz.id)
       .eq('booking_date', today)
-      .neq('status', 'cancelled')
+      .in('status', ['confirmed', 'completed', 'no_show'])
       .order('start_time');
 
     setTodayBookings(todayData || []);
@@ -87,7 +88,7 @@ export default function DashboardPage() {
       .select('*, service:services(*)')
       .eq('business_id', biz.id)
       .gt('booking_date', today)
-      .neq('status', 'cancelled')
+      .in('status', ['confirmed', 'completed', 'no_show'])
       .order('booking_date')
       .order('start_time')
       .limit(20);
@@ -96,7 +97,13 @@ export default function DashboardPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    const run = async () => {
+      await loadData();
+    };
+
+    void run();
+  }, [loadData]);
 
   const updateBookingStatus = async (bookingId: string, status: string) => {
     const supabase = createClient();

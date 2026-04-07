@@ -1,6 +1,6 @@
 export type BusinessType = 'nail' | 'hair' | 'carwash' | 'pet' | 'massage' | 'beauty' | 'other';
 
-export type BookingStatus = 'confirmed' | 'completed' | 'no_show' | 'cancelled';
+export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'no_show' | 'cancelled';
 
 export interface Business {
   id: string;

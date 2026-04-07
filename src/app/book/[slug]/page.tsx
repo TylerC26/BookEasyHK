@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { I18nProvider, useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/language-toggle';
 import { formatPrice, formatTime, addMinutesToTime, timeToMinutes, getBusinessTypeEmoji } from '@/lib/utils';
-import type { Business, Service, WorkingHours, TimeSlot, Booking } from '@/lib/types';
+import type { Business, Service, WorkingHours, TimeSlot } from '@/lib/types';
 import {
   format, addDays, isBefore, startOfDay, isToday,
   startOfMonth, endOfMonth, eachDayOfInterval, getDay,
@@ -237,7 +237,6 @@ function BookingFlow() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [hours, setHours] = useState<WorkingHours[]>([]);
-  const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -253,6 +252,7 @@ function BookingFlow() {
   const [customerNotes, setCustomerNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState('');
+  const [bookingSubmittedMessage, setBookingSubmittedMessage] = useState('');
 
   useEffect(() => { loadBusiness(); }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -278,7 +278,6 @@ function BookingFlow() {
       supabase.from('bookings').select('*').eq('business_id', business.id).eq('booking_date', dateStr).neq('status', 'cancelled'),
       supabase.from('blocked_times').select('*').eq('business_id', business.id).eq('blocked_date', dateStr),
     ]);
-    setExistingBookings(bookings || []);
     const dayOfWeek = date.getDay();
     const dayHours = hours.find((h) => h.day_of_week === dayOfWeek);
     if (!dayHours || !dayHours.is_open || !dayHours.open_time || !dayHours.close_time) { setAvailableSlots([]); return; }
@@ -311,28 +310,36 @@ function BookingFlow() {
     setSubmitting(true);
     setBookingError('');
     try {
-      const supabase = createClient();
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const endTime = addMinutesToTime(selectedTime, selectedService.duration_minutes);
-      const { data: hasOverlap } = await supabase.rpc('check_booking_overlap', { p_business_id: business.id, p_booking_date: dateStr, p_start_time: selectedTime, p_end_time: endTime });
-      if (hasOverlap) { setBookingError(t('slotTaken')); setSubmitting(false); return; }
-      const { error } = await supabase.from('bookings').insert({ business_id: business.id, service_id: selectedService.id, customer_name: customerName, customer_phone: customerPhone, customer_whatsapp: customerWhatsapp || customerPhone, customer_notes: customerNotes || null, booking_date: dateStr, start_time: selectedTime, end_time: endTime, status: 'confirmed' });
-      if (error) throw error;
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_id: business.id,
+          service_id: selectedService.id,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          customer_whatsapp: customerWhatsapp || customerPhone,
+          customer_notes: customerNotes || null,
+          booking_date: dateStr,
+          start_time: selectedTime,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        setBookingError(payload.error || (zh ? '預約失敗，請重試。' : 'Booking failed. Please try again.'));
+        setSubmitting(false);
+        return;
+      }
+
+      setBookingSubmittedMessage(t('customerRequestReceived'));
       setStep('done');
     } catch {
       setBookingError(zh ? '預約失敗，請重試。' : 'Booking failed. Please try again.');
     } finally { setSubmitting(false); }
   };
 
-  const generateCalendarUrl = () => {
-    if (!business || !selectedService || !selectedTime) return '#';
-    const dateStr = format(selectedDate, 'yyyyMMdd');
-    const startStr = selectedTime.replace(':', '');
-    const endStr = addMinutesToTime(selectedTime, selectedService.duration_minutes).replace(':', '');
-    const title = encodeURIComponent(`${selectedService.name} @ ${business.name}`);
-    const location = encodeURIComponent(business.district || '');
-    return `https://calendar.google.com/calendar/r/eventedit?text=${title}&dates=${dateStr}T${startStr}00/${dateStr}T${endStr}00&location=${location}&ctz=Asia/Hong_Kong`;
-  };
 
   const maxDate = addDays(new Date(), business?.max_advance_days || 30);
 
@@ -368,6 +375,9 @@ function BookingFlow() {
           </div>
           <h2 className="text-xl font-semibold text-[#111111] mb-1">{t('bookingConfirmed')}</h2>
           <p className="text-sm text-[#6B7280] mb-6">{t('bookingConfirmedDesc')}</p>
+          <p className="text-xs text-[#0F766E] bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl px-3 py-2 mb-6">
+            {bookingSubmittedMessage || t('bookingPendingNote')}
+          </p>
           {selectedService && (
             <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6 text-left space-y-2.5">
               {[
@@ -382,10 +392,6 @@ function BookingFlow() {
               ))}
             </div>
           )}
-          <a href={generateCalendarUrl()} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-[#0F766E] hover:underline">
-            <Calendar size={14} /> {t('addToCalendar')}
-          </a>
         </div>
       </div>
     );

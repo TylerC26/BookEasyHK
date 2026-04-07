@@ -16,6 +16,7 @@ import {
 import { UserCheck, AlertTriangle, X, List, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' | 'danger' | 'muted'; label_zh: string; label_en: string }> = {
+  pending: { variant: 'warning', label_zh: '待確認', label_en: 'Pending' },
   confirmed: { variant: 'default', label_zh: '已確認', label_en: 'Confirmed' },
   completed: { variant: 'success', label_zh: '已完成', label_en: 'Completed' },
   no_show: { variant: 'danger', label_zh: '爽約', label_en: 'No-Show' },
@@ -65,7 +66,13 @@ export default function BookingsPage() {
     setLoading(false);
   }, [dateFrom, dateTo, statusFilter]);
 
-  useEffect(() => { loadBookings(); }, [loadBookings]);
+  useEffect(() => {
+    const run = async () => {
+      await loadBookings();
+    };
+
+    void run();
+  }, [loadBookings]);
 
   const updateStatus = async (id: string, status: string) => {
     const supabase = createClient();
@@ -142,6 +149,7 @@ export default function BookingsPage() {
                 className="h-10 px-3 rounded-xl border border-border bg-white text-sm"
               >
                 <option value="all">{locale === 'zh-HK' ? '全部' : 'All'}</option>
+                <option value="pending">{locale === 'zh-HK' ? '待確認' : 'Pending'}</option>
                 <option value="confirmed">{locale === 'zh-HK' ? '已確認' : 'Confirmed'}</option>
                 <option value="completed">{locale === 'zh-HK' ? '已完成' : 'Completed'}</option>
                 <option value="no_show">{locale === 'zh-HK' ? '爽約' : 'No-Show'}</option>
@@ -249,6 +257,7 @@ export default function BookingsPage() {
 }
 
 const STATUS_CHIP: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-700',
   confirmed: 'bg-primary/10 text-primary',
   completed: 'bg-emerald-50 text-emerald-700',
   no_show: 'bg-red-50 text-red-600',
@@ -407,6 +416,25 @@ function BookingDetailModal({
             </div>
           ))}
         </div>
+
+        {booking.status === 'pending' && (
+          <div className="flex gap-2 px-6 pb-6 pt-2 border-t border-border mt-2">
+            <button
+              onClick={() => onUpdateStatus(booking.id, 'confirmed')}
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-medium py-2 rounded-xl bg-primary text-white hover:opacity-90 transition-colors cursor-pointer"
+            >
+              <UserCheck size={15} />
+              {t('confirmBookingRequest')}
+            </button>
+            <button
+              onClick={() => { if (confirm(t('cancelConfirm'))) onUpdateStatus(booking.id, 'cancelled'); }}
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-medium py-2 rounded-xl border border-border hover:bg-red-50 transition-colors cursor-pointer"
+            >
+              <X size={15} className="text-red-500" />
+              {locale === 'zh-HK' ? '取消' : 'Cancel'}
+            </button>
+          </div>
+        )}
 
         {booking.status === 'confirmed' && (
           <div className="flex gap-2 px-6 pb-6 pt-2 border-t border-border mt-2">

@@ -2,11 +2,12 @@
 
 import { I18nProvider, useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/language-toggle';
+import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X, Building2, BriefcaseBusiness } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X, Building2, BriefcaseBusiness, Inbox } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Business } from '@/lib/types';
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -15,18 +16,33 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [business, setBusiness] = useState<Business | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const loadBusiness = async () => {
+  const loadBusiness = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data } = await supabase.from('businesses').select('*').eq('owner_id', user.id).single();
     if (!data) { router.push('/onboarding'); return; }
     setBusiness(data);
-  };
 
-  useEffect(() => { loadBusiness(); }, []);
+    const { count } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('business_id', data.id)
+      .eq('status', 'pending');
+
+    setPendingCount(count || 0);
+  }, [router]);
+
+  useEffect(() => {
+    const run = async () => {
+      await loadBusiness();
+    };
+
+    void run();
+  }, [loadBusiness]);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -37,6 +53,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/dashboard', label: t('todaySchedule'), icon: Calendar, exact: true },
+    { href: '/dashboard/requests', label: t('bookingRequests'), icon: Inbox, exact: true, showPendingDot: true },
     { href: '/dashboard/bookings', label: t('allBookings'), icon: List },
     { href: '/dashboard/settings/business', label: zh ? '商戶' : 'Business', icon: Building2 },
     { href: '/dashboard/settings/services', label: zh ? '服務' : 'Services', icon: BriefcaseBusiness },
@@ -96,7 +113,15 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <item.icon size={15} />
-                {item.label}
+                <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                {item.showPendingDot && pendingCount > 0 && (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                    <Badge variant="danger" className="px-1.5 py-0 text-[10px]">
+                      {pendingCount}
+                    </Badge>
+                  </>
+                )}
               </Link>
             );
           })}

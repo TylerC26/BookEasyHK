@@ -85,6 +85,36 @@ export async function sendBookingConfirmation(
   });
 }
 
+export async function sendBookingRequestReceived(
+  customerWhatsapp: string,
+  details: {
+    businessName: string;
+    serviceName: string;
+    date: string;
+    time: string;
+    address?: string;
+  }
+): Promise<boolean> {
+  const body = [
+    `📝 預約申請已收到 Booking Request Received`,
+    ``,
+    `📍 ${details.businessName}`,
+    `💇 ${details.serviceName}`,
+    `📅 ${details.date}`,
+    `🕐 ${details.time}`,
+    details.address ? `📌 ${details.address}` : '',
+    ``,
+    `商戶確認後，我們會再通知你。`,
+    `We will notify you once the owner confirms it.`,
+  ].filter(Boolean).join('\n');
+
+  return sendWhatsAppMessage({
+    to: customerWhatsapp,
+    type: 'text',
+    text: { body },
+  });
+}
+
 export async function sendOwnerBookingAlert(
   ownerWhatsapp: string,
   details: {
@@ -96,13 +126,16 @@ export async function sendOwnerBookingAlert(
   }
 ): Promise<boolean> {
   const body = [
-    `📅 新預約通知 New Booking`,
+    `📅 新預約申請 New Booking Request`,
     ``,
     `👤 ${details.customerName}`,
     `💇 ${details.serviceName}`,
     `📅 ${details.date}`,
     `🕐 ${details.time}`,
     details.phone ? `📞 ${details.phone}` : '',
+    ``,
+    `請到 BookEasy 後台確認此預約。`,
+    `Please confirm this booking in BookEasy.`,
   ].filter(Boolean).join('\n');
 
   return sendWhatsAppMessage({
