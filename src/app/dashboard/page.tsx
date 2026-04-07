@@ -9,10 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { formatTime, addMinutesToTime } from '@/lib/utils';
+import { formatPrice, formatTime, addMinutesToTime } from '@/lib/utils';
 import type { Booking, Business, Service } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
-import { CalendarCheck, Clock, AlertTriangle, Plus, X, UserCheck } from 'lucide-react';
+import { CalendarCheck, Clock, AlertTriangle, ChevronRight, Image as ImageIcon, Plus, X, UserCheck } from 'lucide-react';
+
+const OWNER_NOTE_BUCKET = 'booking-owner-notes';
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' | 'danger' | 'muted'; label_zh: string; label_en: string }> = {
   pending: { variant: 'warning', label_zh: '待確認', label_en: 'Pending' },
@@ -111,6 +113,35 @@ export default function DashboardPage() {
     loadData();
   };
 
+  const updateBookingAmount = async (bookingId: string, price_hkd: number | null) => {
+    const supabase = createClient();
+    await supabase.from('bookings').update({ price_hkd }).eq('id', bookingId);
+
+    setSelectedBooking((current) => (
+      current && current.id === bookingId
+        ? { ...current, price_hkd }
+        : current
+    ));
+
+    loadData();
+  };
+
+  const updateBookingOwnerDetails = async (
+    bookingId: string,
+    fields: Pick<Booking, 'owner_notes' | 'owner_image_url'>
+  ) => {
+    const supabase = createClient();
+    await supabase.from('bookings').update(fields).eq('id', bookingId);
+
+    setSelectedBooking((current) => (
+      current && current.id === bookingId
+        ? { ...current, ...fields }
+        : current
+    ));
+
+    loadData();
+  };
+
   const handleManualBooking = async () => {
     if (!business || !manualName || !manualService) return;
     setManualSubmitting(true);
@@ -122,6 +153,7 @@ export default function DashboardPage() {
     await supabase.from('bookings').insert({
       business_id: business.id,
       service_id: manualService || null,
+      price_hkd: svc?.price_hkd ?? null,
       customer_name: manualName,
       customer_phone: manualPhone || null,
       booking_date: manualDate,
@@ -161,7 +193,7 @@ export default function DashboardPage() {
   // Revenue estimate from confirmed/completed bookings
   const allBookings = [...todayBookings, ...upcomingBookings];
   const revenueEstimate = allBookings.reduce((sum, b) => {
-    const price = (b.service as Service | null)?.price_hkd || 0;
+    const price = b.price_hkd ?? (b.service as Service | null)?.price_hkd ?? 0;
     return sum + (b.status !== 'cancelled' ? price : 0);
   }, 0);
 
@@ -291,6 +323,8 @@ export default function DashboardPage() {
           locale={locale}
           onClose={() => setSelectedBooking(null)}
           onUpdateStatus={(id, status) => { updateBookingStatus(id, status); setSelectedBooking(null); }}
+          onUpdateAmount={updateBookingAmount}
+          onUpdateOwnerDetails={updateBookingOwnerDetails}
           t={t}
         />
       )}
@@ -408,6 +442,7 @@ function BookingRow({
       ? booking.service.name_zh
       : booking.service.name
     : '';
+  const displayPrice = booking.price_hkd ?? booking.service?.price_hkd ?? null;
 
   return (
     <div
@@ -417,52 +452,75 @@ function BookingRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="font-semibold text-base truncate">{booking.customer_name}</span>
-          {booking.is_manual && (
-            <Badge variant="muted">
-              {locale === 'zh-HK' ? '手動' : 'Manual'}
-            </Badge>
+          {booking.customer_phone && (
+            <span className="text-xs text-muted truncate">{booking.customer_phone}</span>
           )}
-          <Badge variant={badge.variant}>
-            {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
-          </Badge>
         </div>
         <div className="flex items-center gap-3 mt-0.5">
           <span className="text-sm font-medium text-on-surface">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</span>
           {showDate && <span className="text-xs text-muted">{format(parseISO(booking.booking_date), 'MMM d')}</span>}
           {serviceName && <span className="text-xs text-muted">· {serviceName}</span>}
         </div>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          {displayPrice !== null && (
+            <Badge variant="default">{formatPrice(displayPrice)}</Badge>
+          )}
+          {booking.is_manual && (
+            <Badge variant="muted">
+              {locale === 'zh-HK' ? '手動' : 'Manual'}
+            </Badge>
+          )}
+          {booking.customer_notes && (
+            <Badge variant="warning">
+              {locale === 'zh-HK' ? '有備注' : 'Has Notes'}
+            </Badge>
+          )}
+          {(booking.owner_notes || booking.owner_image_url) && (
+            <Badge variant="muted">
+              {locale === 'zh-HK' ? '店主備注' : 'Owner Note'}
+            </Badge>
+          )}
+          <Badge variant={badge.variant}>
+            {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
+          </Badge>
+        </div>
       </div>
       {booking.status === 'confirmed' && (
-        <div className="flex gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onUpdateStatus(booking.id, 'completed')}
-            title={t('markDone')}
-          >
-            <UserCheck size={16} className="text-emerald-600" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onUpdateStatus(booking.id, 'no_show')}
-            title={t('markNoShow')}
-          >
-            <AlertTriangle size={16} className="text-amber-500" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (confirm(t('cancelConfirm'))) {
-                onUpdateStatus(booking.id, 'cancelled');
-              }
-            }}
-            title={t('cancelBooking')}
-          >
-            <X size={16} className="text-red-500" />
-          </Button>
-        </div>
+        <>
+          <div className="flex sm:hidden ml-2 text-muted" aria-hidden="true">
+            <ChevronRight size={18} />
+          </div>
+          <div className="hidden sm:flex gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onUpdateStatus(booking.id, 'completed')}
+              title={t('markDone')}
+            >
+              <UserCheck size={16} className="text-emerald-600" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onUpdateStatus(booking.id, 'no_show')}
+              title={t('markNoShow')}
+            >
+              <AlertTriangle size={16} className="text-amber-500" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (confirm(t('cancelConfirm'))) {
+                  onUpdateStatus(booking.id, 'cancelled');
+                }
+              }}
+              title={t('cancelBooking')}
+            >
+              <X size={16} className="text-red-500" />
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );
@@ -473,12 +531,19 @@ function BookingDetailModal({
   locale,
   onClose,
   onUpdateStatus,
+  onUpdateAmount,
+  onUpdateOwnerDetails,
   t,
 }: {
   booking: Booking;
   locale: string;
   onClose: () => void;
   onUpdateStatus: (id: string, status: string) => void;
+  onUpdateAmount: (id: string, price_hkd: number | null) => Promise<void>;
+  onUpdateOwnerDetails: (
+    bookingId: string,
+    fields: Pick<Booking, 'owner_notes' | 'owner_image_url'>
+  ) => Promise<void>;
   t: (key: TranslationKey) => string;
 }) {
   const badge = STATUS_BADGE[booking.status];
@@ -487,6 +552,21 @@ function BookingDetailModal({
       ? booking.service.name_zh
       : booking.service.name
     : null;
+  const [priceInput, setPriceInput] = useState(
+    booking.price_hkd ?? booking.service?.price_hkd ?? null
+  );
+  const [savingAmount, setSavingAmount] = useState(false);
+  const [ownerNotes, setOwnerNotes] = useState(booking.owner_notes ?? '');
+  const [ownerImageUrl, setOwnerImageUrl] = useState(booking.owner_image_url ?? '');
+  const [ownerImageFile, setOwnerImageFile] = useState<File | null>(null);
+  const [savingOwnerDetails, setSavingOwnerDetails] = useState(false);
+
+  useEffect(() => {
+    setPriceInput(booking.price_hkd ?? booking.service?.price_hkd ?? null);
+    setOwnerNotes(booking.owner_notes ?? '');
+    setOwnerImageUrl(booking.owner_image_url ?? '');
+    setOwnerImageFile(null);
+  }, [booking]);
 
   const rows: { label: string; value: string }[] = [
     { label: locale === 'zh-HK' ? '日期' : 'Date', value: format(parseISO(booking.booking_date), 'MMM d, yyyy') },
@@ -497,6 +577,52 @@ function BookingDetailModal({
     ...(booking.customer_email ? [{ label: 'Email', value: booking.customer_email }] : []),
     ...(booking.customer_notes ? [{ label: locale === 'zh-HK' ? '備注' : 'Notes', value: booking.customer_notes }] : []),
   ];
+
+  const saveAmount = async () => {
+    setSavingAmount(true);
+    try {
+      await onUpdateAmount(booking.id, priceInput);
+    } finally {
+      setSavingAmount(false);
+    }
+  };
+
+  const saveOwnerDetails = async () => {
+    setSavingOwnerDetails(true);
+
+    try {
+      let nextImageUrl = ownerImageUrl.trim() || null;
+
+      if (ownerImageFile) {
+        const supabase = createClient();
+        const fileExt = ownerImageFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `${booking.business_id}/${booking.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(OWNER_NOTE_BUCKET)
+          .upload(filePath, ownerImageFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from(OWNER_NOTE_BUCKET)
+          .getPublicUrl(filePath);
+
+        nextImageUrl = data.publicUrl;
+      }
+
+      await onUpdateOwnerDetails(booking.id, {
+        owner_notes: ownerNotes.trim() || null,
+        owner_image_url: nextImageUrl,
+      });
+
+      setOwnerImageUrl(nextImageUrl ?? '');
+      setOwnerImageFile(null);
+    } finally {
+      setSavingOwnerDetails(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -525,6 +651,86 @@ function BookingDetailModal({
               <span className="font-medium">{row.value}</span>
             </div>
           ))}
+
+          <div className="pt-2 border-t border-border">
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <Input
+                  id={`booking-price-${booking.id}`}
+                  label={t('price')}
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={priceInput ?? ''}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    setPriceInput(nextValue === '' ? null : parseInt(nextValue, 10) || 0);
+                  }}
+                />
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={saveAmount}
+                loading={savingAmount}
+              >
+                {locale === 'zh-HK' ? '更新金額' : 'Update Amount'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-border space-y-3">
+            <div className="space-y-1.5">
+              <label htmlFor={`booking-owner-notes-${booking.id}`} className="block text-xs font-medium text-[#3D3D3D]">
+                {locale === 'zh-HK' ? '店主備注' : 'Owner Notes'}
+              </label>
+              <textarea
+                id={`booking-owner-notes-${booking.id}`}
+                value={ownerNotes}
+                onChange={(e) => setOwnerNotes(e.target.value)}
+                rows={3}
+                placeholder={locale === 'zh-HK' ? '加入內部備注...' : 'Add internal notes...'}
+                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3.5 py-2.5 text-sm text-[#111111] placeholder:text-[#D1D5DB] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E] resize-none"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor={`booking-owner-image-${booking.id}`} className="block text-xs font-medium text-[#3D3D3D]">
+                {locale === 'zh-HK' ? '店主圖片' : 'Owner Image'}
+              </label>
+              <input
+                id={`booking-owner-image-${booking.id}`}
+                type="file"
+                accept="image/*"
+                onChange={(e) => setOwnerImageFile(e.target.files?.[0] ?? null)}
+                className="block w-full text-sm text-[#3D3D3D] file:mr-3 file:h-9 file:rounded-lg file:border-0 file:bg-[#F3F4F6] file:px-3.5 file:text-sm file:font-medium file:text-[#3D3D3D] hover:file:bg-[#E5E7EB]"
+              />
+              {ownerImageFile && (
+                <p className="text-xs text-[#6B7280]">{ownerImageFile.name}</p>
+              )}
+              {ownerImageUrl && (
+                <div className="rounded-xl border border-border p-2 bg-slate-50">
+                  <img
+                    src={ownerImageUrl}
+                    alt={locale === 'zh-HK' ? '店主上傳圖片' : 'Owner uploaded image'}
+                    className="w-full h-40 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={saveOwnerDetails}
+                loading={savingOwnerDetails}
+              >
+                <ImageIcon size={15} />
+                {locale === 'zh-HK' ? '儲存備注' : 'Save Notes'}
+              </Button>
+            </div>
+          </div>
         </div>
 
         {booking.status === 'confirmed' && (

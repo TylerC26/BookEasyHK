@@ -48,6 +48,9 @@ export interface Booking {
   id: string;
   business_id: string;
   service_id: string | null;
+  price_hkd: number | null;
+  owner_notes: string | null;
+  owner_image_url: string | null;
   customer_name: string;
   customer_phone: string | null;
   customer_whatsapp: string | null;

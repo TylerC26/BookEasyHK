@@ -70,6 +70,9 @@ CREATE TABLE bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   service_id UUID REFERENCES services(id),
+  price_hkd DECIMAL(10,2) CHECK (price_hkd >= 0),
+  owner_notes TEXT,
+  owner_image_url TEXT,
   customer_name TEXT NOT NULL,
   customer_phone TEXT,
   customer_whatsapp TEXT,
@@ -157,6 +160,47 @@ CREATE POLICY "owners_manage_blocked" ON blocked_times
 
 CREATE POLICY "public_read_blocked" ON blocked_times
   FOR SELECT USING (TRUE);
+
+-- Storage bucket for owner note images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('booking-owner-notes', 'booking-owner-notes', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "owners_upload_booking_note_images" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'booking-owner-notes'
+    AND EXISTS (
+      SELECT 1
+      FROM businesses
+      WHERE businesses.id::text = split_part(name, '/', 1)
+        AND businesses.owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "owners_update_booking_note_images" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'booking-owner-notes'
+    AND EXISTS (
+      SELECT 1
+      FROM businesses
+      WHERE businesses.id::text = split_part(name, '/', 1)
+        AND businesses.owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "owners_delete_booking_note_images" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'booking-owner-notes'
+    AND EXISTS (
+      SELECT 1
+      FROM businesses
+      WHERE businesses.id::text = split_part(name, '/', 1)
+        AND businesses.owner_id = auth.uid()
+    )
+  );
 
 -- ============================================
 -- FUNCTIONS

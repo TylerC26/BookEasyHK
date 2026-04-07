@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     // Load service for duration
     let duration = 60;
     let serviceName = '';
+    let servicePrice: number | null = null;
     if (service_id) {
       const { data: svc } = await supabase
         .from('services')
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
       if (svc) {
         duration = svc.duration_minutes;
         serviceName = svc.name;
+        servicePrice = svc.price_hkd;
       }
     }
 
@@ -77,6 +79,7 @@ export async function POST(request: NextRequest) {
       .insert({
         business_id,
         service_id: service_id || null,
+        price_hkd: servicePrice,
         customer_name,
         customer_phone: customer_phone || null,
         customer_whatsapp: customer_whatsapp || customer_phone || null,
