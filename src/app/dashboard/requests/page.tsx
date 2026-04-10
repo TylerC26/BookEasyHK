@@ -140,9 +140,17 @@ function PendingBookingCard({
       className="border border-amber-200 bg-amber-50/60 rounded-2xl p-4 cursor-pointer hover:bg-amber-50 transition-colors"
       onClick={onSelect}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex gap-3 mb-3 min-w-0">
+        {/* Time column */}
+        <div className="w-14 shrink-0 flex flex-col items-end gap-1 pt-0.5">
+          <span className="text-xs font-semibold text-on-surface leading-none">{formatTime(booking.start_time)}</span>
+          <div className="w-px h-3 bg-amber-300 self-center" />
+          <span className="text-xs text-muted leading-none">{formatTime(booking.end_time)}</span>
+        </div>
+
+        {/* Content with amber left border */}
+        <div className="flex-1 min-w-0 border-l-2 border-amber-400 pl-3">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
             <h3 className="font-semibold text-on-surface">{booking.customer_name}</h3>
             <Badge variant="warning">{t('statusPending')}</Badge>
             <span className="inline-flex items-center gap-1 text-xs text-red-600 bg-white/80 border border-red-200 px-2 py-0.5 rounded-full">
@@ -150,30 +158,28 @@ function PendingBookingCard({
               {locale === 'zh-HK' ? '未讀' : 'Unread'}
             </span>
           </div>
-          <div className="text-sm text-muted mt-2 space-y-1">
-            <p>
-              {format(parseISO(booking.booking_date), 'MMM d')} · {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-            </p>
+          <div className="text-xs text-muted space-y-0.5">
+            <p>{format(parseISO(booking.booking_date), locale === 'zh-HK' ? 'M月d日' : 'MMM d, yyyy')}</p>
             {serviceName && <p>{serviceName}</p>}
             {booking.customer_phone && <p>{booking.customer_phone}</p>}
-            {booking.customer_notes && <p>{booking.customer_notes}</p>}
+            {booking.customer_notes && <p className="text-amber-700">{booking.customer_notes}</p>}
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={onConfirm}
-            className="px-3 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 cursor-pointer"
-          >
-            {t('confirmBookingRequest')}
-          </button>
-          <button
-            onClick={() => { if (confirm(t('cancelConfirm'))) onCancel(); }}
-            className="px-3 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 cursor-pointer"
-          >
-            {locale === 'zh-HK' ? '拒絕' : 'Decline'}
-          </button>
-        </div>
+      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onConfirm}
+          className="flex-1 px-3 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 cursor-pointer"
+        >
+          {t('confirmBookingRequest')}
+        </button>
+        <button
+          onClick={() => { if (confirm(t('cancelConfirm'))) onCancel(); }}
+          className="px-3 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 cursor-pointer whitespace-nowrap"
+        >
+          {locale === 'zh-HK' ? '拒絕' : 'Decline'}
+        </button>
       </div>
     </div>
   );
@@ -204,7 +210,7 @@ function BookingDetailModal({
     { label: locale === 'zh-HK' ? '時間' : 'Time', value: `${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}` },
     ...(serviceName ? [{ label: locale === 'zh-HK' ? '服務' : 'Service', value: serviceName }] : []),
     ...(booking.customer_phone ? [{ label: locale === 'zh-HK' ? '電話' : 'Phone', value: booking.customer_phone }] : []),
-    ...(booking.customer_whatsapp ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
+    ...(booking.customer_whatsapp && booking.customer_whatsapp !== booking.customer_phone ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
     ...(booking.customer_email ? [{ label: 'Email', value: booking.customer_email }] : []),
     ...(booking.customer_notes ? [{ label: locale === 'zh-HK' ? '備注' : 'Notes', value: booking.customer_notes }] : []),
   ];

@@ -22,6 +22,14 @@ const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' 
   cancelled: { variant: 'muted', label_zh: '已取消', label_en: 'Cancelled' },
 };
 
+const STATUS_BORDER: Record<string, string> = {
+  pending: 'border-amber-400',
+  confirmed: 'border-[#0F766E]',
+  completed: 'border-emerald-500',
+  no_show: 'border-red-500',
+  cancelled: 'border-slate-300',
+};
+
 export default function DashboardPage() {
   const { t, locale } = useI18n();
   const [business, setBusiness] = useState<Business | null>(null);
@@ -216,7 +224,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-[#111111]">
             {business?.name ? `${business.name}` : t('dashboard')}
@@ -226,10 +234,10 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowBlock(true)}>
+          <Button variant="outline" size="sm" className="whitespace-nowrap" onClick={() => setShowBlock(true)}>
             {t('blockTime')}
           </Button>
-          <Button size="sm" onClick={() => setShowManual(true)}>
+          <Button size="sm" className="whitespace-nowrap" onClick={() => setShowManual(true)}>
             <Plus size={16} /> {t('manualBooking')}
           </Button>
         </div>
@@ -444,77 +452,49 @@ function BookingRow({
 
   return (
     <div
-      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors"
+      className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors"
       onClick={() => onSelect(booking)}
     >
-      <div className="flex-1 min-w-0">
+      {/* Time column */}
+      <div className="w-14 shrink-0 flex flex-col items-end gap-1 pt-0.5">
+        <span className="text-xs font-semibold text-on-surface leading-none">{formatTime(booking.start_time)}</span>
+        <div className="w-px h-3 bg-border self-center" />
+        <span className="text-xs text-muted leading-none">{formatTime(booking.end_time)}</span>
+      </div>
+
+      {/* Content with coloured left border */}
+      <div className={`flex-1 min-w-0 border-l-2 pl-3 ${STATUS_BORDER[booking.status]}`}>
         <div className="flex items-center gap-2 mb-1">
           <span className="font-semibold text-base truncate">{booking.customer_name}</span>
+          {showDate && <span className="text-xs text-muted shrink-0">{format(parseISO(booking.booking_date), 'MMM d')}</span>}
           {booking.customer_phone && (
-            <span className="text-xs text-muted truncate">{booking.customer_phone}</span>
+            <span className="text-xs text-muted truncate hidden sm:inline">{booking.customer_phone}</span>
           )}
         </div>
-        <div className="flex items-center gap-3 mt-0.5">
-          <span className="text-sm font-medium text-on-surface">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</span>
-          {showDate && <span className="text-xs text-muted">{format(parseISO(booking.booking_date), 'MMM d')}</span>}
-          {serviceName && <span className="text-xs text-muted">· {serviceName}</span>}
-        </div>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          {displayPrice !== null && (
-            <Badge variant="default">{formatPrice(displayPrice)}</Badge>
-          )}
-          {booking.is_manual && (
-            <Badge variant="muted">
-              {locale === 'zh-HK' ? '手動' : 'Manual'}
-            </Badge>
-          )}
-          {booking.customer_notes && (
-            <Badge variant="warning">
-              {locale === 'zh-HK' ? '有備注' : 'Has Notes'}
-            </Badge>
-          )}
-          {booking.owner_notes && (
-            <Badge variant="muted">
-              {locale === 'zh-HK' ? '店主備注' : 'Owner Note'}
-            </Badge>
-          )}
-          <Badge variant={badge.variant}>
-            {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
-          </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          {serviceName && <span className="text-xs text-muted">{serviceName}</span>}
+          {displayPrice !== null && <Badge variant="default">{formatPrice(displayPrice)}</Badge>}
+          {booking.is_manual && <Badge variant="muted">{locale === 'zh-HK' ? '手動' : 'Manual'}</Badge>}
+          {booking.customer_notes && <Badge variant="warning">{locale === 'zh-HK' ? '有備注' : 'Has Notes'}</Badge>}
+          {booking.owner_notes && <Badge variant="muted">{locale === 'zh-HK' ? '店主備注' : 'Owner Note'}</Badge>}
+          <Badge variant={badge.variant}>{locale === 'zh-HK' ? badge.label_zh : badge.label_en}</Badge>
         </div>
       </div>
+
+      {/* Actions */}
       {booking.status === 'confirmed' && (
         <>
-          <div className="flex sm:hidden ml-2 text-muted" aria-hidden="true">
+          <div className="flex sm:hidden ml-1 text-muted shrink-0" aria-hidden="true">
             <ChevronRight size={18} />
           </div>
-          <div className="hidden sm:flex gap-1 ml-2" onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onUpdateStatus(booking.id, 'completed')}
-              title={t('markDone')}
-            >
+          <div className="hidden sm:flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="sm" onClick={() => onUpdateStatus(booking.id, 'completed')} title={t('markDone')}>
               <UserCheck size={16} className="text-emerald-600" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onUpdateStatus(booking.id, 'no_show')}
-              title={t('markNoShow')}
-            >
+            <Button variant="ghost" size="sm" onClick={() => onUpdateStatus(booking.id, 'no_show')} title={t('markNoShow')}>
               <AlertTriangle size={16} className="text-amber-500" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (confirm(t('cancelConfirm'))) {
-                  onUpdateStatus(booking.id, 'cancelled');
-                }
-              }}
-              title={t('cancelBooking')}
-            >
+            <Button variant="ghost" size="sm" onClick={() => { if (confirm(t('cancelConfirm'))) onUpdateStatus(booking.id, 'cancelled'); }} title={t('cancelBooking')}>
               <X size={16} className="text-red-500" />
             </Button>
           </div>
@@ -567,7 +547,7 @@ function BookingDetailModal({
     { label: locale === 'zh-HK' ? '時間' : 'Time', value: `${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}` },
     ...(serviceName ? [{ label: t('service'), value: serviceName }] : []),
     ...(booking.customer_phone ? [{ label: t('phoneNumber'), value: booking.customer_phone }] : []),
-    ...(booking.customer_whatsapp ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
+    ...(booking.customer_whatsapp && booking.customer_whatsapp !== booking.customer_phone ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
     ...(booking.customer_email ? [{ label: 'Email', value: booking.customer_email }] : []),
     ...(booking.customer_notes ? [{ label: locale === 'zh-HK' ? '備注' : 'Notes', value: booking.customer_notes }] : []),
   ];

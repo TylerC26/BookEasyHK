@@ -13,7 +13,7 @@ import {
   startOfMonth, endOfMonth, eachDayOfInterval,
   getDay, isSameDay, addMonths, subMonths,
 } from 'date-fns';
-import { UserCheck, AlertTriangle, X, List, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserCheck, AlertTriangle, X, List, CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' | 'danger' | 'muted'; label_zh: string; label_en: string }> = {
   pending: { variant: 'warning', label_zh: '待確認', label_en: 'Pending' },
@@ -30,6 +30,7 @@ export default function BookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [filterOpen, setFilterOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [statusFilter, setStatusFilter] = useState('all');
@@ -52,10 +53,12 @@ export default function BookingsPage() {
       .from('bookings')
       .select('*, service:services(*)')
       .eq('business_id', biz.id)
-      .gte('booking_date', dateFrom)
-      .lte('booking_date', dateTo)
       .order('booking_date', { ascending: false })
       .order('start_time', { ascending: false });
+
+    if (filterOpen) {
+      query = query.gte('booking_date', dateFrom).lte('booking_date', dateTo);
+    }
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
@@ -64,7 +67,7 @@ export default function BookingsPage() {
     const { data } = await query.limit(100);
     setBookings(data || []);
     setLoading(false);
-  }, [dateFrom, dateTo, statusFilter]);
+  }, [filterOpen, dateFrom, dateTo, statusFilter]);
 
   useEffect(() => {
     const run = async () => {
@@ -89,8 +92,6 @@ export default function BookingsPage() {
   };
 
   const switchToList = () => {
-    setDateFrom(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
-    setDateTo(format(new Date(), 'yyyy-MM-dd'));
     setView('list');
   };
 
@@ -103,28 +104,39 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">{t('bookingHistory')}</h1>
-        <div className="flex gap-1 p-1 bg-surface neomorph-inset rounded-xl">
-          <button
-            onClick={switchToList}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${view === 'list' ? 'bg-white shadow text-primary' : 'text-muted hover:text-on-surface'}`}
-          >
-            <List size={15} />
-            {locale === 'zh-HK' ? '列表' : 'List'}
-          </button>
-          <button
-            onClick={switchToCalendar}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${view === 'calendar' ? 'bg-white shadow text-primary' : 'text-muted hover:text-on-surface'}`}
-          >
-            <CalendarDays size={15} />
-            {locale === 'zh-HK' ? '月曆' : 'Calendar'}
-          </button>
+        <div className="flex items-center gap-2">
+          {view === 'list' && (
+            <button
+              onClick={() => setFilterOpen((o) => !o)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all cursor-pointer border ${filterOpen ? 'border-primary text-primary bg-primary/5' : 'border-border text-muted hover:text-on-surface'}`}
+            >
+              <SlidersHorizontal size={14} />
+              {locale === 'zh-HK' ? '篩選' : 'Filter'}
+            </button>
+          )}
+          <div className="flex gap-1 p-1 bg-surface neomorph-inset rounded-xl">
+            <button
+              onClick={switchToList}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${view === 'list' ? 'bg-white shadow text-primary' : 'text-muted hover:text-on-surface'}`}
+            >
+              <List size={15} />
+              {locale === 'zh-HK' ? '列表' : 'List'}
+            </button>
+            <button
+              onClick={switchToCalendar}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${view === 'calendar' ? 'bg-white shadow text-primary' : 'text-muted hover:text-on-surface'}`}
+            >
+              <CalendarDays size={15} />
+              {locale === 'zh-HK' ? '月曆' : 'Calendar'}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Filters — list view only */}
-      {view === 'list' && (
+      {/* Filters — list view, toggled */}
+      {view === 'list' && filterOpen && (
         <Card>
           <div className="flex flex-wrap items-end gap-4">
             <Input
@@ -182,63 +194,53 @@ export default function BookingsPage() {
             {locale === 'zh-HK' ? '暫無紀錄' : 'No bookings found'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="pb-3 font-medium">{t('date')}</th>
-                  <th className="pb-3 font-medium">{t('time')}</th>
-                  <th className="pb-3 font-medium">{t('customerName')}</th>
-                  <th className="pb-3 font-medium">{t('service')}</th>
-                  <th className="pb-3 font-medium">{t('status')}</th>
-                  <th className="pb-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {bookings.map((b) => {
-                  const badge = STATUS_BADGE[b.status];
-                  const svcName = b.service
-                    ? locale === 'zh-HK' && b.service.name_zh ? b.service.name_zh : b.service.name
-                    : '—';
+          <div className="divide-y divide-border">
+            {bookings.map((b) => {
+              const badge = STATUS_BADGE[b.status];
+              const svcName = b.service
+                ? locale === 'zh-HK' && b.service.name_zh ? b.service.name_zh : b.service.name
+                : null;
 
-                  return (
-                    <tr
-                      key={b.id}
-                      className="cursor-pointer hover:bg-slate-50 transition-colors"
-                      onClick={() => setSelectedBooking(b)}
-                    >
-                      <td className="py-3">{format(parseISO(b.booking_date), 'MMM d')}</td>
-                      <td className="py-3">{formatTime(b.start_time)}</td>
-                      <td className="py-3 font-medium">
-                        {b.customer_name}
-                        {b.is_manual && <span className="text-xs text-muted ml-1">(M)</span>}
-                      </td>
-                      <td className="py-3 text-muted">{svcName}</td>
-                      <td className="py-3">
-                        <Badge variant={badge.variant}>
-                          {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
-                        </Badge>
-                      </td>
-                      <td className="py-3" onClick={(e) => e.stopPropagation()}>
-                        {b.status === 'confirmed' && (
-                          <div className="flex gap-1">
-                            <button onClick={() => updateStatus(b.id, 'completed')} className="p-1 hover:bg-emerald-50 rounded cursor-pointer" title={t('markDone')}>
-                              <UserCheck size={16} className="text-emerald-600" />
-                            </button>
-                            <button onClick={() => updateStatus(b.id, 'no_show')} className="p-1 hover:bg-amber-50 rounded cursor-pointer" title={t('markNoShow')}>
-                              <AlertTriangle size={16} className="text-amber-500" />
-                            </button>
-                            <button onClick={() => { if (confirm(t('cancelConfirm'))) updateStatus(b.id, 'cancelled'); }} className="p-1 hover:bg-red-50 rounded cursor-pointer" title={t('cancelBooking')}>
-                              <X size={16} className="text-red-500" />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              return (
+                <div
+                  key={b.id}
+                  className="w-full flex gap-3 py-3 hover:bg-slate-50 transition-colors cursor-pointer first:pt-1 last:pb-1"
+                  onClick={() => setSelectedBooking(b)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  {/* Time column */}
+                  <div className="w-14 shrink-0 flex flex-col items-end gap-1 pt-0.5">
+                    <span className="text-xs font-semibold text-on-surface leading-none">{formatTime(b.start_time)}</span>
+                    <div className="w-px h-3 bg-border self-center" />
+                    <span className="text-xs text-muted leading-none">{formatTime(b.end_time)}</span>
+                  </div>
+
+                  {/* Content with coloured left border */}
+                  <div className={`flex-1 min-w-0 border-l-2 pl-3 ${STATUS_BORDER[b.status]}`}>
+                    <div className="flex items-start justify-between gap-2 mb-0.5">
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-on-surface truncate block">
+                          {b.customer_name}
+                          {b.is_manual && <span className="text-xs text-muted font-normal ml-1">(M)</span>}
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="text-xs text-muted">{format(parseISO(b.booking_date), locale === 'zh-HK' ? 'M月d日' : 'MMM d')}</span>
+                          {svcName && <><span className="text-muted text-xs">·</span><span className="text-xs text-muted">{svcName}</span></>}
+                        </div>
+                      </div>
+                      <Badge variant={badge.variant} className="shrink-0">
+                        {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 text-muted">
+                    <ChevronRight size={16} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </Card>}
@@ -256,12 +258,20 @@ export default function BookingsPage() {
   );
 }
 
-const STATUS_CHIP: Record<string, string> = {
-  pending: 'bg-amber-50 text-amber-700',
-  confirmed: 'bg-primary/10 text-primary',
-  completed: 'bg-emerald-50 text-emerald-700',
-  no_show: 'bg-red-50 text-red-600',
-  cancelled: 'bg-slate-100 text-slate-500',
+const STATUS_DOT: Record<string, string> = {
+  pending: 'bg-amber-400',
+  confirmed: 'bg-[#0F766E]',
+  completed: 'bg-emerald-500',
+  no_show: 'bg-red-500',
+  cancelled: 'bg-slate-300',
+};
+
+const STATUS_BORDER: Record<string, string> = {
+  pending: 'border-amber-400',
+  confirmed: 'border-[#0F766E]',
+  completed: 'border-emerald-500',
+  no_show: 'border-red-500',
+  cancelled: 'border-slate-300',
 };
 
 function CalendarView({
@@ -281,6 +291,8 @@ function CalendarView({
   onSelectBooking: (b: Booking) => void;
   locale: string;
 }) {
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
   const firstDay = startOfMonth(calendarDate);
   const days = eachDayOfInterval({ start: firstDay, end: endOfMonth(calendarDate) });
   const startOffset = getDay(firstDay);
@@ -292,67 +304,123 @@ function CalendarView({
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const today = new Date();
+  const selectedDayBookings = selectedDay ? bookings.filter((b) => b.booking_date === selectedDay) : [];
 
   return (
-    <Card>
-      {/* Month navigation */}
-      <div className="flex items-center justify-between mb-5">
-        <button onClick={onPrev} className="p-2 rounded-lg hover:bg-surface transition-colors cursor-pointer">
-          <ChevronLeft size={18} />
-        </button>
-        <span className="font-semibold text-base">
-          {format(calendarDate, locale === 'zh-HK' ? 'yyyy年 M月' : 'MMMM yyyy')}
-        </span>
-        <button onClick={onNext} className="p-2 rounded-lg hover:bg-surface transition-colors cursor-pointer">
-          <ChevronRight size={18} />
-        </button>
-      </div>
-
-      {/* Day headers */}
-      <div className="grid grid-cols-7 mb-1">
-        {dayHeaders.map((d) => (
-          <div key={d} className="text-center text-xs text-muted font-medium py-1">{d}</div>
-        ))}
-      </div>
-
-      {/* Grid */}
-      {loading ? (
-        <div className="text-center py-12 text-muted text-sm">{locale === 'zh-HK' ? '載入中...' : 'Loading...'}</div>
-      ) : (
-        <div className="grid grid-cols-7 gap-px bg-border rounded-xl overflow-hidden">
-          {cells.map((day, i) => {
-            if (!day) {
-              return <div key={i} className="bg-surface-dim min-h-[90px]" />;
-            }
-            const dateStr = format(day, 'yyyy-MM-dd');
-            const dayBookings = bookings.filter((b) => b.booking_date === dateStr);
-            const isToday = isSameDay(day, today);
-
-            return (
-              <div key={i} className="bg-card min-h-[90px] p-1.5">
-                <div className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday ? 'bg-primary text-white' : 'text-on-surface'}`}>
-                  {format(day, 'd')}
-                </div>
-                <div className="space-y-0.5">
-                  {dayBookings.slice(0, 3).map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() => onSelectBooking(b)}
-                      className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate cursor-pointer ${STATUS_CHIP[b.status]}`}
-                    >
-                      {formatTime(b.start_time)} {b.customer_name}
-                    </button>
-                  ))}
-                  {dayBookings.length > 3 && (
-                    <div className="text-xs text-muted px-1.5">+{dayBookings.length - 3}</div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+    <>
+      <Card>
+        {/* Month navigation */}
+        <div className="flex items-center justify-between mb-5">
+          <button onClick={onPrev} className="p-2 rounded-lg hover:bg-surface transition-colors cursor-pointer">
+            <ChevronLeft size={18} />
+          </button>
+          <span className="font-semibold text-base">
+            {format(calendarDate, locale === 'zh-HK' ? 'yyyy年 M月' : 'MMMM yyyy')}
+          </span>
+          <button onClick={onNext} className="p-2 rounded-lg hover:bg-surface transition-colors cursor-pointer">
+            <ChevronRight size={18} />
+          </button>
         </div>
+
+        {/* Day headers */}
+        <div className="grid grid-cols-7 mb-1">
+          {dayHeaders.map((d) => (
+            <div key={d} className="text-center text-xs text-muted font-medium py-1">{d}</div>
+          ))}
+        </div>
+
+        {/* Grid */}
+        {loading ? (
+          <div className="text-center py-12 text-muted text-sm">{locale === 'zh-HK' ? '載入中...' : 'Loading...'}</div>
+        ) : (
+          <div className="grid grid-cols-7 gap-px bg-border rounded-xl overflow-hidden">
+            {cells.map((day, i) => {
+              if (!day) {
+                return <div key={i} className="bg-surface-dim min-h-[56px]" />;
+              }
+              const dateStr = format(day, 'yyyy-MM-dd');
+              const dayBookings = bookings.filter((b) => b.booking_date === dateStr);
+              const isToday = isSameDay(day, today);
+              const isSelected = selectedDay === dateStr;
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDay(isSelected ? null : dateStr)}
+                  className={`bg-card min-h-[56px] p-1.5 flex flex-col items-center transition-colors cursor-pointer ${
+                    dayBookings.length > 0 ? 'hover:bg-slate-50' : 'cursor-default'
+                  } ${isSelected ? 'bg-slate-50 ring-1 ring-inset ring-primary/30' : ''}`}
+                >
+                  <div className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday ? 'bg-primary text-white' : 'text-on-surface'}`}>
+                    {format(day, 'd')}
+                  </div>
+                  {dayBookings.length > 0 && (
+                    <div className="flex flex-wrap justify-center gap-0.5">
+                      {dayBookings.slice(0, 4).map((b) => (
+                        <span key={b.id} className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[b.status]}`} />
+                      ))}
+                      {dayBookings.length > 4 && (
+                        <span className="text-[9px] text-muted leading-none mt-0.5">+{dayBookings.length - 4}</span>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      {/* Day detail panel */}
+      {selectedDay && (
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm text-on-surface">
+              {format(parseISO(selectedDay), locale === 'zh-HK' ? 'M月d日 EEEE' : 'EEEE, MMMM d')}
+            </h3>
+            <button onClick={() => setSelectedDay(null)} className="text-muted hover:text-on-surface transition-colors cursor-pointer">
+              <X size={16} />
+            </button>
+          </div>
+          {selectedDayBookings.length === 0 ? (
+            <p className="text-sm text-muted text-center py-4">{locale === 'zh-HK' ? '當日暫無預約' : 'No bookings on this day'}</p>
+          ) : (
+            <div className="divide-y divide-border">
+              {[...selectedDayBookings].sort((a, b) => a.start_time.localeCompare(b.start_time)).map((b) => {
+                const badge = STATUS_BADGE[b.status];
+                const svcName = b.service
+                  ? locale === 'zh-HK' && b.service.name_zh ? b.service.name_zh : b.service.name
+                  : null;
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => { onSelectBooking(b); setSelectedDay(null); }}
+                    className="w-full flex gap-3 py-3 hover:bg-slate-50 transition-colors text-left cursor-pointer first:pt-1 last:pb-1"
+                  >
+                    {/* Time column */}
+                    <div className="w-14 shrink-0 flex flex-col items-end gap-1 pt-0.5">
+                      <span className="text-xs font-semibold text-on-surface leading-none">{formatTime(b.start_time)}</span>
+                      <div className="w-px h-3 bg-border self-center" />
+                      <span className="text-xs text-muted leading-none">{formatTime(b.end_time)}</span>
+                    </div>
+                    {/* Content with coloured left border */}
+                    <div className={`flex-1 min-w-0 border-l-2 pl-3 ${STATUS_BORDER[b.status]}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-sm font-medium text-on-surface truncate">{b.customer_name}</span>
+                        <Badge variant={badge.variant} className="shrink-0">
+                          {locale === 'zh-HK' ? badge.label_zh : badge.label_en}
+                        </Badge>
+                      </div>
+                      {svcName && <div className="text-xs text-muted mt-0.5">{svcName}</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </Card>
       )}
-    </Card>
+    </>
   );
 }
 
@@ -381,7 +449,7 @@ function BookingDetailModal({
     { label: locale === 'zh-HK' ? '時間' : 'Time', value: `${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}` },
     ...(serviceName ? [{ label: locale === 'zh-HK' ? '服務' : 'Service', value: serviceName }] : []),
     ...(booking.customer_phone ? [{ label: locale === 'zh-HK' ? '電話' : 'Phone', value: booking.customer_phone }] : []),
-    ...(booking.customer_whatsapp ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
+    ...(booking.customer_whatsapp && booking.customer_whatsapp !== booking.customer_phone ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
     ...(booking.customer_email ? [{ label: 'Email', value: booking.customer_email }] : []),
     ...(booking.customer_notes ? [{ label: locale === 'zh-HK' ? '備注' : 'Notes', value: booking.customer_notes }] : []),
   ];

@@ -58,7 +58,6 @@ function OnboardingWizard() {
   const [addressMapLink, setAddressMapLink] = useState('');
   const [addressLabel, setAddressLabel] = useState('');
   const [phone, setPhone] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
   const [businessImageFile, setBusinessImageFile] = useState<File | null>(null);
   const [businessImagePreviewUrl, setBusinessImagePreviewUrl] = useState('');
   const [socialLinks, setSocialLinks] = useState<BusinessSocialLinks>(EMPTY_SOCIAL_LINKS);
@@ -167,7 +166,7 @@ function OnboardingWizard() {
           address_text: addressText.trim() || null,
           address_map_link: normalizeOptionalUrl(addressMapLink),
           phone,
-          whatsapp: whatsapp || phone,
+          whatsapp: phone,
           slug: slug || generateSlug(businessName),
           business_image_url: businessImageUrl,
           social_links: buildBusinessSocialLinks(socialLinks),
@@ -291,15 +290,6 @@ function OnboardingWizard() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+852 9XXX XXXX"
-              />
-              <Input
-                id="whatsapp"
-                label={t('whatsappNumber')}
-                type="tel"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="+852 9XXX XXXX"
-                hint={locale === 'zh-HK' ? '如與電話號碼相同可留空' : 'Leave blank if same as phone'}
               />
               <div className="space-y-1.5">
                 <p className="block text-xs font-medium text-[#3D3D3D]">{t('businessImage')}</p>

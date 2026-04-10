@@ -25,7 +25,6 @@ export default function BusinessSettingsPage() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
   const [addressText, setAddressText] = useState('');
   const [addressMapLink, setAddressMapLink] = useState('');
   const [addressLabel, setAddressLabel] = useState('');
@@ -54,7 +53,6 @@ export default function BusinessSettingsPage() {
     setBusiness(biz);
     setName(biz.name);
     setPhone(biz.phone || '');
-    setWhatsapp(biz.whatsapp || '');
     setAddressText(biz.address_text || '');
     setAddressMapLink(biz.address_map_link || '');
     setAddressLabel('');
@@ -95,7 +93,7 @@ export default function BusinessSettingsPage() {
         .update({
           name,
           phone,
-          whatsapp,
+          whatsapp: phone,
           address_text: addressText.trim() || null,
           address_map_link: normalizeOptionalUrl(addressMapLink),
           business_image_url: nextBusinessImageUrl,
@@ -183,7 +181,6 @@ export default function BusinessSettingsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input id="biz-name" label={t('businessName')} value={name} onChange={(e) => setName(e.target.value)} />
           <Input id="biz-phone" label={t('phone')} value={phone} onChange={(e) => setPhone(e.target.value)} />
-          <Input id="biz-wa" label={t('whatsappNumber')} value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
           <Input
             id="biz-address-text"
             label={t('manualAddress')}

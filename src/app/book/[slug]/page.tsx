@@ -308,7 +308,6 @@ function BookingFlow() {
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [customerWhatsapp, setCustomerWhatsapp] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState('');
@@ -379,7 +378,7 @@ function BookingFlow() {
           service_id: selectedService.id,
           customer_name: customerName,
           customer_phone: customerPhone,
-          customer_whatsapp: customerWhatsapp || customerPhone,
+          customer_whatsapp: customerPhone,
           customer_notes: customerNotes || null,
           booking_date: dateStr,
           start_time: selectedTime,
@@ -608,7 +607,6 @@ function BookingFlow() {
                   <div className="space-y-4">
                     <Input id="customerName" label={t('name')} value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder={zh ? '你的姓名' : 'Your name'} required />
                     <Input id="customerPhone" label={t('phoneNumber')} type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="+852 9XXX XXXX" required />
-                    <Input id="customerWhatsapp" label={`WhatsApp ${t('phoneNumber')}`} type="tel" value={customerWhatsapp} onChange={(e) => setCustomerWhatsapp(e.target.value)} placeholder="+852 9XXX XXXX" hint={zh ? '如與電話號碼相同可留空' : 'Leave blank if same as phone'} />
                     <div className="space-y-1.5">
                       <label className="block text-xs font-medium text-[#3D3D3D]">
                         {t('notes')} <span className="text-[#9CA3AF] font-normal">({t('optional')})</span>
