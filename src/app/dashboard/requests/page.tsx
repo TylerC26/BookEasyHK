@@ -40,7 +40,7 @@ export default function PendingRequestsPage() {
 
     const { data } = await supabase
       .from('bookings')
-      .select('*, service:services(*)')
+      .select('*, service:services(*), booking_answers(*, question:booking_questions(*))')
       .eq('business_id', biz.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
@@ -61,6 +61,24 @@ export default function PendingRequestsPage() {
   const updateStatus = async (id: string, status: string) => {
     const supabase = createClient();
     await supabase.from('bookings').update({ status }).eq('id', id);
+
+    // When a booking is cancelled, notify the first person on the waitlist
+    // for that slot (fire-and-forget).
+    if (status === 'cancelled') {
+      const cancelled = bookings.find((b) => b.id === id);
+      if (cancelled) {
+        fetch('/api/waitlist/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            business_id: cancelled.business_id,
+            booking_date: cancelled.booking_date,
+            start_time: cancelled.start_time,
+          }),
+        }).catch(console.error);
+      }
+    }
+
     await loadPendingBookings();
   };
 
@@ -204,6 +222,17 @@ function BookingDetailModal({
       ? booking.service.name_zh
       : booking.service.name
     : null;
+  const customerNotesSection = [
+    ...(booking.customer_notes
+      ? [{ label: locale === 'zh-HK' ? '客人備注' : 'Customer Note', value: booking.customer_notes }]
+      : []),
+    ...((booking.booking_answers || [])
+      .filter((answer) => answer.answer_text?.trim())
+      .map((answer) => ({
+        label: answer.question?.question_text || (locale === 'zh-HK' ? '附加問題' : 'Booking Question'),
+        value: answer.answer_text,
+      }))),
+  ];
 
   const rows: { label: string; value: string }[] = [
     { label: locale === 'zh-HK' ? '日期' : 'Date', value: format(parseISO(booking.booking_date), 'MMM d, yyyy') },
@@ -212,7 +241,6 @@ function BookingDetailModal({
     ...(booking.customer_phone ? [{ label: locale === 'zh-HK' ? '電話' : 'Phone', value: booking.customer_phone }] : []),
     ...(booking.customer_whatsapp && booking.customer_whatsapp !== booking.customer_phone ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
     ...(booking.customer_email ? [{ label: 'Email', value: booking.customer_email }] : []),
-    ...(booking.customer_notes ? [{ label: locale === 'zh-HK' ? '備注' : 'Notes', value: booking.customer_notes }] : []),
   ];
 
   return (
@@ -231,6 +259,22 @@ function BookingDetailModal({
         </div>
 
         <div className="px-6 pb-4 space-y-3">
+          {customerNotesSection.length > 0 && (
+            <div className="rounded-xl bg-[#FAFAFB] border border-[#E5E7EB] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280] mb-3">
+                {locale === 'zh-HK' ? '客人備注' : 'Customer Notes'}
+              </p>
+              <div className="space-y-3">
+                {customerNotesSection.map((row) => (
+                  <div key={row.label} className="flex items-start gap-3 text-sm">
+                    <span className="text-muted w-24 shrink-0">{row.label}</span>
+                    <span className="font-medium whitespace-pre-wrap">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {rows.map((row) => (
             <div key={row.label} className="flex items-start gap-3 text-sm">
               <span className="text-muted w-20 shrink-0">{row.label}</span>

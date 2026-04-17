@@ -15,7 +15,12 @@
       "Read(//opt/homebrew/lib/node_modules/npm/bin/**)",
       "Bash(command -v npm)",
       "Read(//opt/homebrew/Cellar/node/23.11.0/bin/**)",
-      "Read(//Users/tylerc26/.nvm/versions/**)"
+      "Read(//Users/tylerc26/.nvm/versions/**)",
+      "Bash(kill 2769)",
+      "Bash(ls *.sql)",
+      "Bash(ls supabase/seed*)",
+      "Bash(find /Users/tylerc26/Dev/BookEasyHK/src/lib -name \"*.ts\" -exec basename {} \\\\;)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

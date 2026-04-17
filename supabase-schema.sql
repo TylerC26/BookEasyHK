@@ -51,6 +51,61 @@ CREATE TABLE services (
 CREATE INDEX idx_services_business ON services(business_id);
 
 -- ============================================
+-- BOOKING QUESTIONS
+-- ============================================
+CREATE TABLE booking_questions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  service_id UUID REFERENCES services(id) ON DELETE CASCADE,
+  question_text TEXT NOT NULL,
+  input_type TEXT NOT NULL CHECK (input_type IN ('text', 'select', 'yes-no')),
+  options JSONB,
+  is_required BOOLEAN DEFAULT FALSE,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT booking_questions_text_not_blank CHECK (btrim(question_text) <> ''),
+  CONSTRAINT booking_questions_select_options CHECK (
+    (input_type = 'select' AND jsonb_typeof(COALESCE(options, '[]'::jsonb)) = 'array' AND jsonb_array_length(COALESCE(options, '[]'::jsonb)) > 0)
+    OR (input_type <> 'select' AND (options IS NULL OR jsonb_typeof(options) = 'array'))
+  )
+);
+
+CREATE INDEX idx_booking_questions_business_service
+  ON booking_questions(business_id, service_id, sort_order);
+
+CREATE UNIQUE INDEX idx_booking_questions_group_sort
+  ON booking_questions (business_id, COALESCE(service_id, '00000000-0000-0000-0000-000000000000'::uuid), sort_order);
+
+CREATE OR REPLACE FUNCTION enforce_booking_question_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+  existing_count INT;
+BEGIN
+  SELECT COUNT(*)
+  INTO existing_count
+  FROM booking_questions
+  WHERE business_id = NEW.business_id
+    AND (
+      (service_id IS NULL AND NEW.service_id IS NULL)
+      OR service_id = NEW.service_id
+    )
+    AND id <> COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid);
+
+  IF existing_count >= 3 THEN
+    RAISE EXCEPTION 'Maximum of 3 booking questions allowed per service or business-wide group';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER booking_questions_limit_trigger
+  BEFORE INSERT OR UPDATE ON booking_questions
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_booking_question_limit();
+
+-- ============================================
 -- WORKING HOURS
 -- ============================================
 CREATE TABLE working_hours (
@@ -97,6 +152,20 @@ CREATE INDEX idx_bookings_business_date ON bookings(business_id, booking_date);
 CREATE INDEX idx_bookings_status ON bookings(status);
 
 -- ============================================
+-- BOOKING ANSWERS
+-- ============================================
+CREATE TABLE booking_answers (
+  booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL REFERENCES booking_questions(id) ON DELETE CASCADE,
+  answer_text TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (booking_id, question_id),
+  CONSTRAINT booking_answers_text_not_blank CHECK (btrim(answer_text) <> '')
+);
+
+CREATE INDEX idx_booking_answers_question ON booking_answers(question_id);
+
+-- ============================================
 -- BLOCKED TIMES
 -- ============================================
 CREATE TABLE blocked_times (
@@ -112,14 +181,40 @@ CREATE TABLE blocked_times (
 CREATE INDEX idx_blocked_times_business_date ON blocked_times(business_id, blocked_date);
 
 -- ============================================
+-- WAITLIST
+-- ============================================
+CREATE TABLE waitlist (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  service_id UUID REFERENCES services(id) ON DELETE SET NULL,
+  slot_datetime TIMESTAMPTZ NOT NULL,
+  customer_name TEXT NOT NULL,
+  customer_whatsapp TEXT NOT NULL,
+  position INT NOT NULL CHECK (position > 0),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'notified', 'expired', 'booked')),
+  notified_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_waitlist_slot_status_position
+  ON waitlist (business_id, slot_datetime, status, position);
+
+CREATE INDEX idx_waitlist_expiry
+  ON waitlist (status, expires_at);
+
+-- ============================================
 -- ROW LEVEL SECURITY
 -- ============================================
 
 ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE booking_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE working_hours ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE booking_answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blocked_times ENABLE ROW LEVEL SECURITY;
+ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
 
 -- Businesses: owners can CRUD their own
 CREATE POLICY "owners_manage_business" ON businesses
@@ -137,6 +232,17 @@ CREATE POLICY "owners_manage_services" ON services
 
 CREATE POLICY "public_read_services" ON services
   FOR SELECT USING (active = TRUE);
+
+-- Booking questions: owners manage, public reads active service/business-wide questions
+CREATE POLICY "owners_manage_booking_questions" ON booking_questions
+  FOR ALL USING (
+    business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid())
+  );
+
+CREATE POLICY "public_read_booking_questions" ON booking_questions
+  FOR SELECT USING (
+    business_id IN (SELECT id FROM businesses WHERE onboarding_complete = TRUE)
+  );
 
 -- Working hours: owners manage, public reads
 CREATE POLICY "owners_manage_hours" ON working_hours
@@ -156,6 +262,20 @@ CREATE POLICY "owners_manage_bookings" ON bookings
 CREATE POLICY "public_create_booking" ON bookings
   FOR INSERT WITH CHECK (TRUE);
 
+-- Booking answers: owners manage via their business, public can insert for bookings
+CREATE POLICY "owners_manage_booking_answers" ON booking_answers
+  FOR ALL USING (
+    booking_id IN (
+      SELECT id
+      FROM bookings
+      WHERE business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid())
+    )
+  );
+
+-- WITH CHECK (TRUE) is safe: the FK constraint already rejects invalid booking_id values.
+CREATE POLICY "public_create_booking_answers" ON booking_answers
+  FOR INSERT WITH CHECK (TRUE);
+
 -- Blocked times: owners manage, public reads
 CREATE POLICY "owners_manage_blocked" ON blocked_times
   FOR ALL USING (
@@ -164,6 +284,12 @@ CREATE POLICY "owners_manage_blocked" ON blocked_times
 
 CREATE POLICY "public_read_blocked" ON blocked_times
   FOR SELECT USING (TRUE);
+
+-- Waitlist: owners can manage their business waitlist
+CREATE POLICY "owners_manage_waitlist" ON waitlist
+  FOR ALL USING (
+    business_id IN (SELECT id FROM businesses WHERE owner_id = auth.uid())
+  );
 
 -- Storage bucket for owner note images
 INSERT INTO storage.buckets (id, name, public)
@@ -290,6 +416,25 @@ BEGIN
       AND start_time < p_end_time
       AND end_time > p_start_time
   );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Get next waitlist position for a business/slot pair
+CREATE OR REPLACE FUNCTION get_waitlist_position(
+  p_business_id UUID,
+  p_slot_datetime TIMESTAMPTZ
+) RETURNS INT AS $$
+DECLARE
+  next_position INT;
+BEGIN
+  SELECT COALESCE(MAX(position), 0) + 1
+  INTO next_position
+  FROM waitlist
+  WHERE business_id = p_business_id
+    AND slot_datetime = p_slot_datetime
+    AND status IN ('pending', 'notified');
+
+  RETURN next_position;
 END;
 $$ LANGUAGE plpgsql;
 

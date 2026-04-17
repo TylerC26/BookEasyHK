@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X, Building2, BriefcaseBusiness, Inbox } from 'lucide-react';
+import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X, Building2, BriefcaseBusiness, Inbox, MessageSquareText } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import type { Business } from '@/lib/types';
 
@@ -57,6 +57,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     { href: '/dashboard/bookings', label: t('allBookings'), icon: List },
     { href: '/dashboard/settings/business', label: zh ? '商戶' : 'Business', icon: Building2 },
     { href: '/dashboard/settings/services', label: zh ? '服務' : 'Services', icon: BriefcaseBusiness },
+    { href: '/dashboard/settings/booking-questions', label: zh ? '預約問題' : 'Booking Questions', icon: MessageSquareText },
   ];
 
   const initials = business?.name

@@ -44,6 +44,28 @@ export interface Service {
   created_at: string;
 }
 
+export type BookingQuestionInputType = 'text' | 'select' | 'yes-no';
+
+export interface BookingQuestion {
+  id: string;
+  business_id: string;
+  service_id: string | null;
+  question_text: string;
+  input_type: BookingQuestionInputType;
+  options: string[] | null;
+  is_required: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BookingAnswer {
+  booking_id: string;
+  question_id: string;
+  answer_text: string;
+  question?: BookingQuestion;
+}
+
 export interface WorkingHours {
   id: string;
   business_id: string;
@@ -77,6 +99,7 @@ export interface Booking {
   created_at: string;
   updated_at: string;
   service?: Service;
+  booking_answers?: BookingAnswer[];
 }
 
 export interface BlockedTime {
@@ -92,6 +115,28 @@ export interface BlockedTime {
 export interface TimeSlot {
   time: string;
   available: boolean;
+}
+
+// ── Waitlist ─────────────────────────────────────────────────────────────────
+
+export type WaitlistStatus = 'pending' | 'notified' | 'expired' | 'booked';
+
+export interface WaitlistEntry {
+  id: string;
+  business_id: string;
+  service_id: string | null;
+  /** ISO timestamp representing the HK-local slot time, stored as UTC */
+  slot_datetime: string;
+  customer_name: string;
+  customer_whatsapp: string;
+  /** 1-based queue position within (business_id, slot_datetime) */
+  position: number;
+  status: WaitlistStatus;
+  /** Set when status transitions to 'notified' */
+  notified_at: string | null;
+  /** notified_at + 30 min — used by the expiry cron */
+  expires_at: string | null;
+  created_at: string;
 }
 
 export interface OnboardingData {

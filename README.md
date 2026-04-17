@@ -12,6 +12,8 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 Then run the SQL in [`supabase-schema.sql`](/Users/tylerc26/Dev/BookEasyHK/supabase-schema.sql) inside the Supabase SQL Editor.
 
+If your database was already created before the waitlist feature existed, also run [`supabase-waitlist-migration.sql`](/Users/tylerc26/Dev/BookEasyHK/supabase-waitlist-migration.sql).
+
 ### Storage Setup For Business Images
 
 The app is now prepared for a public storage bucket named `business-images` with:

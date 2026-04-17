@@ -198,6 +198,49 @@ export async function sendReminder2h(
   });
 }
 
+// ── Waitlist notification ─────────────────────────────────────────────────────
+
+/**
+ * Notify a waitlisted customer that a slot has opened up.
+ * Sent when a booking is cancelled and they are first in the queue.
+ */
+export async function sendWaitlistSlotOpened(
+  customerWhatsapp: string,
+  details: {
+    businessName: string;
+    serviceName: string;
+    date: string;   // e.g. "2026-04-11"
+    time: string;   // e.g. "14:00"
+    bookingLink: string;
+  }
+): Promise<boolean> {
+  // Format date for display
+  const [year, month, day] = details.date.split('-');
+  const displayDate = `${year}-${month}-${day}`;
+
+  const body = [
+    `🎉 有空位了！A slot has opened up!`,
+    ``,
+    `📍 ${details.businessName}`,
+    `💇 ${details.serviceName}`,
+    `📅 ${displayDate}`,
+    `🕐 ${details.time}`,
+    ``,
+    `你在輪候名單上。立即點擊預約（30分鐘內有效）：`,
+    `You're on the waitlist. Tap to book (expires in 30 minutes):`,
+    `👉 ${details.bookingLink}`,
+    ``,
+    `⏰ 此連結將於30分鐘後失效。`,
+    `This link expires in 30 minutes.`,
+  ].join('\n');
+
+  return sendWhatsAppMessage({
+    to: customerWhatsapp,
+    type: 'text',
+    text: { body },
+  });
+}
+
 export async function sendCancellationNotice(
   customerWhatsapp: string,
   details: {

@@ -2,11 +2,33 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  const protectedPaths = ['/dashboard', '/onboarding'];
+  const isProtected = protectedPaths.some((p) => path.startsWith(p));
+  const isAuthRoute = path.startsWith('/auth');
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Supabase middleware misconfigured: missing environment variables.');
+
+    if (isProtected) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/auth/login';
+      url.searchParams.set('error', 'config');
+      return NextResponse.redirect(url);
+    }
+
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -25,27 +47,34 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
+    if (isProtected && !user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/auth/login';
+      return NextResponse.redirect(url);
+    }
 
-  // Protected routes — redirect to login if unauthenticated
-  const protectedPaths = ['/dashboard', '/onboarding'];
-  const isProtected = protectedPaths.some((p) => path.startsWith(p));
+    if (isAuthRoute && user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  } catch (error) {
+    console.error('Supabase middleware auth check failed.', {
+      path,
+      error,
+    });
 
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth/login';
-    return NextResponse.redirect(url);
-  }
-
-  // Auth routes — redirect to dashboard if already logged in
-  if (path.startsWith('/auth') && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+    if (isProtected) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/auth/login';
+      url.searchParams.set('error', 'auth_unavailable');
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

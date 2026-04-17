@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { sendBookingRequestReceived, sendOwnerBookingAlert } from '@/lib/whatsapp';
 import { addMinutesToTime } from '@/lib/utils';
+import type { BookingQuestion } from '@/lib/types';
+
+type BookingAnswerPayload = {
+  question_id: string;
+  answer_text: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +21,7 @@ export async function POST(request: NextRequest) {
       customer_notes,
       booking_date,
       start_time,
+      answers,
     } = body;
 
     if (!business_id || !customer_name || !booking_date || !start_time) {
@@ -42,6 +49,77 @@ export async function POST(request: NextRequest) {
     }
 
     const end_time = addMinutesToTime(start_time, duration);
+
+    const normalizedAnswers: BookingAnswerPayload[] = Array.isArray(answers)
+      ? answers
+          .filter(
+            (answer): answer is BookingAnswerPayload =>
+              Boolean(answer?.question_id) && typeof answer?.answer_text === 'string'
+          )
+          .map((answer) => ({
+            question_id: answer.question_id,
+            answer_text: answer.answer_text.trim(),
+          }))
+          .filter((answer) => answer.answer_text.length > 0)
+      : [];
+
+    const { data: businessQuestions } = await supabase
+      .from('booking_questions')
+      .select('*')
+      .eq('business_id', business_id);
+
+    const allBusinessQuestions = (businessQuestions || []) as BookingQuestion[];
+    const allowedQuestions = allBusinessQuestions.filter(
+      (question) => question.service_id == null || question.service_id === service_id
+    );
+
+    const questionMap = new Map(
+      allBusinessQuestions.map((question) => [question.id, question])
+    );
+
+    const answeredQuestionIds = new Set(normalizedAnswers.map((answer) => answer.question_id));
+    const requiredQuestion = allowedQuestions.find(
+      (question) => question.is_required && !answeredQuestionIds.has(question.id)
+    );
+
+    if (requiredQuestion) {
+      return NextResponse.json(
+        { error: 'Please complete all required booking questions' },
+        { status: 400 }
+      );
+    }
+
+    for (const answer of normalizedAnswers) {
+      const question = questionMap.get(answer.question_id);
+
+      if (!question) {
+        return NextResponse.json(
+          { error: 'One or more booking question answers are invalid' },
+          { status: 400 }
+        );
+      }
+
+      if (
+        question.input_type === 'yes-no' &&
+        answer.answer_text !== 'Yes' &&
+        answer.answer_text !== 'No'
+      ) {
+        return NextResponse.json(
+          { error: 'Please answer yes/no questions using the provided options' },
+          { status: 400 }
+        );
+      }
+
+      if (
+        question.input_type === 'select' &&
+        !((question.options || []).includes(answer.answer_text))
+      ) {
+        return NextResponse.json(
+          { error: 'Please choose a valid option for each booking question' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Double-booking prevention
     const { data: hasOverlap } = await supabase.rpc('check_booking_overlap', {
@@ -107,6 +185,21 @@ export async function POST(request: NextRequest) {
         );
       }
       return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
+    }
+
+    if (normalizedAnswers.length > 0) {
+      const { error: answersError } = await supabase.from('booking_answers').insert(
+        normalizedAnswers.map((answer) => ({
+          booking_id: booking.id,
+          question_id: answer.question_id,
+          answer_text: answer.answer_text,
+        }))
+      );
+
+      if (answersError) {
+        await supabase.from('bookings').delete().eq('id', booking.id);
+        return NextResponse.json({ error: 'Failed to save booking answers' }, { status: 500 });
+      }
     }
 
     // Load business for notifications
