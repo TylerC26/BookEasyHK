@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import translations, { type Locale, type TranslationKey } from './translations';
 
 interface I18nContextType {
@@ -18,15 +18,18 @@ export function I18nProvider({
   children: React.ReactNode;
   defaultLocale?: Locale;
 }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
+  const [locale, setLocaleState] = useState<Locale>(defaultLocale);
+
+  useEffect(() => {
     const saved = localStorage.getItem('bookeasyhk-locale') as Locale | null;
-
-    if (saved && (saved === 'zh-HK' || saved === 'en')) {
-      return saved;
+    if (saved === 'zh-HK' || saved === 'en') {
+      setLocaleState(saved);
+      return;
     }
-
-    return navigator.language.startsWith('zh') ? 'zh-HK' : defaultLocale;
-  });
+    if (navigator.language.startsWith('zh')) {
+      setLocaleState('zh-HK');
+    }
+  }, []);
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
