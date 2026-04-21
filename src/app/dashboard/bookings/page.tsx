@@ -6,14 +6,14 @@ import { useI18n } from '@/lib/i18n/context';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { formatTime } from '@/lib/utils';
+import { formatPrice, formatTime } from '@/lib/utils';
 import type { Booking } from '@/lib/types';
 import {
   format, parseISO, subDays,
   startOfMonth, endOfMonth, eachDayOfInterval,
   getDay, isSameDay, addMonths, subMonths,
 } from 'date-fns';
-import { UserCheck, AlertTriangle, X, List, CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { UserCheck, AlertTriangle, X, List, CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal, ImageIcon } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' | 'danger' | 'muted'; label_zh: string; label_en: string }> = {
   pending: { variant: 'warning', label_zh: '待確認', label_en: 'Pending' },
@@ -245,6 +245,12 @@ export default function BookingsPage() {
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           <span className="text-xs text-muted">{format(parseISO(b.booking_date), locale === 'zh-HK' ? 'M月d日' : 'MMM d')}</span>
                           {svcName && <><span className="text-muted text-xs">·</span><span className="text-xs text-muted">{svcName}</span></>}
+                          {b.customer_image_url && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] text-violet-700 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded-full">
+                              <ImageIcon size={10} />
+                              {locale === 'zh-HK' ? '附圖' : 'Photo'}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <Badge variant={badge.variant} className="shrink-0">
@@ -473,10 +479,18 @@ function BookingDetailModal({
       }))),
   ];
 
+  const isTbc = booking.service?.pricing_type === 'tbc';
+  const priceValue = booking.price_hkd != null
+    ? formatPrice(booking.price_hkd)
+    : isTbc
+      ? (locale === 'zh-HK' ? '待確認' : 'TBC — pending')
+      : null;
+
   const rows: { label: string; value: string }[] = [
     { label: locale === 'zh-HK' ? '日期' : 'Date', value: format(parseISO(booking.booking_date), 'MMM d, yyyy') },
     { label: locale === 'zh-HK' ? '時間' : 'Time', value: `${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}` },
     ...(serviceName ? [{ label: locale === 'zh-HK' ? '服務' : 'Service', value: serviceName }] : []),
+    ...(priceValue ? [{ label: locale === 'zh-HK' ? '價格' : 'Price', value: priceValue }] : []),
     ...(booking.customer_phone ? [{ label: locale === 'zh-HK' ? '電話' : 'Phone', value: booking.customer_phone }] : []),
     ...(booking.customer_whatsapp && booking.customer_whatsapp !== booking.customer_phone ? [{ label: 'WhatsApp', value: booking.customer_whatsapp }] : []),
     ...(booking.customer_email ? [{ label: 'Email', value: booking.customer_email }] : []),
@@ -484,8 +498,8 @@ function BookingDetailModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between p-6 pb-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between p-6 pb-4 shrink-0">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-lg font-semibold">{booking.customer_name}</h3>
@@ -504,7 +518,7 @@ function BookingDetailModal({
           </button>
         </div>
 
-        <div className="px-6 pb-4 space-y-3">
+        <div className="px-6 pb-4 space-y-3 overflow-y-auto flex-1">
           {customerNotesSection.length > 0 && (
             <div className="rounded-xl bg-[#FAFAFB] border border-[#E5E7EB] p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280] mb-3">
@@ -512,12 +526,27 @@ function BookingDetailModal({
               </p>
               <div className="space-y-3">
                 {customerNotesSection.map((row) => (
-                  <div key={row.label} className="flex items-start gap-3 text-sm">
-                    <span className="text-muted w-24 shrink-0">{row.label}</span>
-                    <span className="font-medium whitespace-pre-wrap">{row.value}</span>
+                  <div key={row.label} className="space-y-0.5">
+                    <p className="text-xs text-muted">{row.label}</p>
+                    <p className="text-sm font-medium whitespace-pre-wrap">{row.value}</p>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {booking.customer_image_url && (
+            <div className="rounded-xl bg-[#FAFAFB] border border-[#E5E7EB] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280] mb-3 flex items-center gap-1.5">
+                <ImageIcon size={12} />
+                {locale === 'zh-HK' ? '客人附圖' : 'Customer Photo'}
+              </p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={booking.customer_image_url}
+                alt={locale === 'zh-HK' ? '客人上傳圖片' : 'Customer uploaded photo'}
+                className="w-full rounded-lg object-cover max-h-72"
+              />
             </div>
           )}
 

@@ -14,7 +14,7 @@ import {
   startOfMonth, endOfMonth, eachDayOfInterval, getDay,
   addMonths, subMonths, isSameDay, isSameMonth,
 } from 'date-fns';
-import { Check, ChevronLeft, ChevronRight, Calendar, ArrowRight, Clock, MapPin, Phone, ExternalLink, Users, Timer } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Calendar, ArrowRight, Clock, MapPin, Phone, ExternalLink, Users, Timer, ImagePlus, X } from 'lucide-react';
 
 type BookingStep = 'service' | 'datetime' | 'details' | 'confirm' | 'done';
 
@@ -88,6 +88,7 @@ function CalendarPicker({
   zh: boolean;
 }) {
   const [viewMonth, setViewMonth] = useState(new Date(selectedDate));
+  const [collapsed, setCollapsed] = useState(false);
   const today = startOfDay(new Date());
   const dayLabels = zh
     ? ['日', '一', '二', '三', '四', '五', '六']
@@ -99,10 +100,29 @@ function CalendarPicker({
   const startPad = getDay(monthStart); // 0=Sun
   const allCells = [...Array(startPad).fill(null), ...days];
 
+  if (collapsed) {
+    return (
+      <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Calendar size={14} className="text-[#0F766E]" />
+          <span className="text-sm font-semibold text-[#111111]">
+            {format(selectedDate, zh ? 'M月d日（EEE）' : 'EEE, MMM d')}
+          </span>
+        </div>
+        <button
+          onClick={() => setCollapsed(false)}
+          className="text-xs font-medium text-[#0F766E] hover:underline"
+        >
+          {zh ? '更改' : 'Change'}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
+    <div className="bg-white border border-[#E5E7EB] rounded-xl p-3">
       {/* Month header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-[#111111]">
           {format(viewMonth, zh ? 'yyyy年 M月' : 'MMMM yyyy')}
         </h3>
@@ -127,7 +147,7 @@ function CalendarPicker({
       {/* Day labels */}
       <div className="grid grid-cols-7 mb-1">
         {dayLabels.map((d) => (
-          <div key={d} className="text-center text-[11px] font-medium text-[#9CA3AF] py-1">
+          <div key={d} className="text-center text-[11px] font-medium text-[#9CA3AF] py-0.5">
             {d}
           </div>
         ))}
@@ -146,9 +166,14 @@ function CalendarPicker({
           return (
             <button
               key={day.toISOString()}
-              onClick={() => !disabled && onSelect(day)}
+              onClick={() => {
+                if (!disabled) {
+                  onSelect(day);
+                  setCollapsed(true);
+                }
+              }}
               disabled={disabled}
-              className={`aspect-square flex items-center justify-center text-xs rounded-lg font-medium transition-colors ${
+              className={`h-8 flex items-center justify-center text-sm rounded-md font-medium transition-colors ${
                 isSelected
                   ? 'bg-[#0F766E] text-white'
                   : todayDay && !disabled
@@ -196,9 +221,13 @@ function SummaryPanel({
             <p className="text-sm font-semibold text-[#111111]">
               {zh && selectedService.name_zh ? selectedService.name_zh : selectedService.name}
             </p>
-            {selectedService.price_hkd && (
+            {selectedService.pricing_type === 'tbc' ? (
+              <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                {zh ? '待確認' : 'TBC'}
+              </span>
+            ) : selectedService.price_hkd ? (
               <span className="text-sm font-bold text-[#111111]">{formatPrice(selectedService.price_hkd)}</span>
-            )}
+            ) : null}
           </div>
           <p className="text-xs text-[#6B7280] mb-2">
             {selectedService.duration_minutes}{zh ? '分鐘' : ' min'}
@@ -323,6 +352,10 @@ function BookingFlow() {
   const [bookingError, setBookingError] = useState('');
   const [bookingSubmittedMessage, setBookingSubmittedMessage] = useState('');
 
+  const [customerImageUrl, setCustomerImageUrl] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState('');
+
   // ── Waitlist state ─────────────────────────────────────────────────────────
   /** true when the selected time slot is fully booked and user is joining the waitlist */
   const [isWaitlistSlot, setIsWaitlistSlot] = useState(false);
@@ -349,6 +382,35 @@ function BookingFlow() {
       ...current,
       [questionId]: answer,
     }));
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!business) return;
+    if (!file.type.startsWith('image/')) {
+      setImageUploadError(zh ? '請選擇圖片檔案' : 'Please select an image file.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setImageUploadError(zh ? '圖片不可超過 10MB' : 'Image must be 10 MB or smaller.');
+      return;
+    }
+    setImageUploading(true);
+    setImageUploadError('');
+    try {
+      const supabase = createClient();
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${business.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('booking-images')
+        .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('booking-images').getPublicUrl(path);
+      setCustomerImageUrl(data.publicUrl);
+    } catch {
+      setImageUploadError(zh ? '上傳失敗，請重試' : 'Upload failed. Please try again.');
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const loadBusiness = async () => {
@@ -450,6 +512,7 @@ function BookingFlow() {
           customer_phone: customerPhone,
           customer_whatsapp: customerPhone,
           customer_notes: customerNotes || null,
+          customer_image_url: customerImageUrl || null,
           answers: visibleQuestions
             .map((question) => ({
               question_id: question.id,
@@ -691,17 +754,27 @@ function BookingFlow() {
                       }}
                       className="w-full text-left px-4 py-4 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#0F766E] hover:bg-[#CCFBF1]/10 transition-colors cursor-pointer group"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-[#111111]">
-                            {zh && svc.name_zh ? svc.name_zh : svc.name}
-                          </p>
-                          <div className="flex items-center gap-3 mt-0.5 text-xs text-[#6B7280]">
-                            <span className="flex items-center gap-1"><Clock size={11} /> {svc.duration_minutes}{zh ? '分鐘' : ' min'}</span>
-                            {svc.price_hkd && <span className="font-semibold text-[#111111]">{formatPrice(svc.price_hkd)}</span>}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-base font-semibold text-[#111111]">
+                              {zh && svc.name_zh ? svc.name_zh : svc.name}
+                            </p>
+                            <span className="flex items-center gap-1 text-xs text-[#6B7280]">
+                              <Clock size={11} /> {svc.duration_minutes}{zh ? '分鐘' : ' min'}
+                            </span>
                           </div>
                         </div>
-                        <ArrowRight size={16} className="text-[#D1D5DB] group-hover:text-[#0F766E] transition-colors" />
+                        <div className="flex items-center gap-3 shrink-0">
+                          {svc.pricing_type === 'tbc' ? (
+                            <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                              {zh ? '待確認' : 'TBC'}
+                            </span>
+                          ) : svc.price_hkd ? (
+                            <span className="text-sm font-bold text-[#111111]">{formatPrice(svc.price_hkd)}</span>
+                          ) : null}
+                          <ArrowRight size={16} className="text-[#D1D5DB] group-hover:text-[#0F766E] transition-colors" />
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -868,7 +941,7 @@ function BookingFlow() {
                       </label>
                       <Input id="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="+852 9XXX XXXX" required />
                     </div>
-                    {/* Notes — only shown for regular bookings */}
+                    {/* Notes + image upload — only shown for regular bookings */}
                     {!isWaitlistSlot && (
                       <div className="space-y-1.5">
                         <label className="block text-xs font-medium text-[#3D3D3D]">
@@ -881,6 +954,63 @@ function BookingFlow() {
                           rows={3}
                           className="w-full px-3.5 py-2.5 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#111111] placeholder:text-[#D1D5DB] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E] resize-none"
                         />
+                      </div>
+                    )}
+                    {!isWaitlistSlot && selectedService?.allow_customer_image && (
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-medium text-[#3D3D3D]">
+                          {zh ? '上傳圖片' : 'Upload Image'}
+                          <span className="text-[#9CA3AF] font-normal ml-1">({t('optional')})</span>
+                        </label>
+                        {customerImageUrl ? (
+                          <div className="relative w-full">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={customerImageUrl}
+                              alt={zh ? '已上傳圖片' : 'Uploaded image'}
+                              className="w-full h-44 object-cover rounded-xl border border-[#E5E7EB]"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setCustomerImageUrl('')}
+                              className="absolute top-2 right-2 bg-white border border-[#E5E7EB] rounded-full p-1 hover:bg-red-50 text-[#6B7280] hover:text-red-500 transition-colors shadow-sm"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#E5E7EB] rounded-xl cursor-pointer hover:border-[#0F766E] hover:bg-[#CCFBF1]/10 transition-colors">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleImageUpload(file);
+                              }}
+                            />
+                            {imageUploading ? (
+                              <div className="flex flex-col items-center gap-2 text-[#6B7280]">
+                                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                                <span className="text-xs">{zh ? '上傳中...' : 'Uploading...'}</span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center gap-1.5 text-[#9CA3AF]">
+                                <ImagePlus size={22} />
+                                <span className="text-xs font-medium text-[#6B7280]">
+                                  {zh ? '點擊選擇圖片' : 'Tap to choose an image'}
+                                </span>
+                                <span className="text-[10px]">{zh ? 'JPG、PNG，最大 10MB' : 'JPG, PNG up to 10 MB'}</span>
+                              </div>
+                            )}
+                          </label>
+                        )}
+                        {imageUploadError && (
+                          <p className="text-xs text-red-500">{imageUploadError}</p>
+                        )}
                       </div>
                     )}
                     {!isWaitlistSlot && visibleQuestions.length > 0 && (
@@ -1015,7 +1145,11 @@ function BookingFlow() {
                       [t('date'), format(selectedDate, 'MMM d, yyyy (EEEE)')],
                       [t('time'), formatTime(selectedTime)],
                       [t('duration'), `${selectedService.duration_minutes}${zh ? '分鐘' : ' min'}`],
-                      ...(selectedService.price_hkd && !isWaitlistSlot ? [[t('price'), formatPrice(selectedService.price_hkd)]] : []),
+                      ...(!isWaitlistSlot && selectedService.pricing_type === 'tbc'
+                        ? [[t('price'), zh ? '待確認（確認預約時告知）' : 'TBC (confirmed by business)']]
+                        : selectedService.price_hkd && !isWaitlistSlot
+                          ? [[t('price'), formatPrice(selectedService.price_hkd)]]
+                          : []),
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between text-sm">
                         <span className="text-[#6B7280]">{label}</span>

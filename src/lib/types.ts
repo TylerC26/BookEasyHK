@@ -32,6 +32,8 @@ export interface Business {
   updated_at: string;
 }
 
+export type ServicePricingType = 'fixed' | 'tbc';
+
 export interface Service {
   id: string;
   business_id: string;
@@ -39,8 +41,10 @@ export interface Service {
   name_zh: string | null;
   duration_minutes: number;
   price_hkd: number | null;
+  pricing_type: ServicePricingType;
   active: boolean;
   sort_order: number;
+  allow_customer_image: boolean;
   created_at: string;
 }
 
@@ -89,6 +93,7 @@ export interface Booking {
   customer_whatsapp: string | null;
   customer_email: string | null;
   customer_notes: string | null;
+  customer_image_url: string | null;
   booking_date: string;
   start_time: string;
   end_time: string;
