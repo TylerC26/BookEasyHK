@@ -17,6 +17,7 @@ import {
 import {
   Check, ChevronLeft, ChevronRight, Calendar, ArrowRight, Clock, MapPin,
   ExternalLink, Users, Timer, ImagePlus, X, ShieldCheck, MessageCircle,
+  Phone as PhoneIcon, Sparkles,
 } from 'lucide-react';
 
 type BookingStep = 'select' | 'confirm' | 'done';
@@ -29,9 +30,6 @@ type BookingStep = 'select' | 'confirm' | 'done';
  */
 type SlotInfo = { time: string; available: boolean; waitlistable: boolean };
 
-const STEP_LABELS_ZH = ['填寫預約', '確認'];
-const STEP_LABELS_EN = ['Booking', 'Confirm'];
-
 const SOCIAL_LABELS = {
   instagram: 'Instagram',
   threads: 'Threads',
@@ -39,47 +37,52 @@ const SOCIAL_LABELS = {
   other: 'Link',
 } as const;
 
-// Soft gradient palette for service tile headers (rotates by index).
-const TILE_GRADIENTS = [
-  'bg-gradient-to-br from-[#CCFBF1] to-[#5EEAD4]',
-  'bg-gradient-to-br from-[#FCE7F3] to-[#F9A8D4]',
-  'bg-gradient-to-br from-[#FEF3C7] to-[#FCD34D]',
-  'bg-gradient-to-br from-[#DBEAFE] to-[#93C5FD]',
-  'bg-gradient-to-br from-[#EDE9FE] to-[#C4B5FD]',
-  'bg-gradient-to-br from-[#FFEDD5] to-[#FDBA74]',
-];
-
-// ── Step indicator (3 steps) ────────────────────────────────────────────────
-function StepIndicator({ step, zh }: { step: BookingStep; zh: boolean }) {
-  const STEPS: BookingStep[] = ['select', 'confirm'];
-  const currentIdx = STEPS.indexOf(step);
-  const labels = zh ? STEP_LABELS_ZH : STEP_LABELS_EN;
+// ── Step rail ────────────────────────────────────────────────────────────────
+function StepRail({ step, zh }: { step: BookingStep; zh: boolean }) {
+  const steps: { key: BookingStep; en: string; zh: string }[] = [
+    { key: 'select', en: 'Select', zh: '選擇' },
+    { key: 'confirm', en: 'Confirm', zh: '確認' },
+  ];
+  const activeIdx = steps.findIndex((s) => s.key === step);
 
   return (
-    <div className="flex items-center gap-0 mb-5">
-      {STEPS.map((s, i) => {
-        const isCompleted = currentIdx > i;
-        const isActive = currentIdx === i;
+    <div className="flex items-center gap-2 mb-6">
+      {steps.map((s, i) => {
+        const done = activeIdx > i;
+        const active = activeIdx === i;
         return (
-          <div key={s} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold border-2 transition-colors ${
-                  isCompleted
-                    ? 'bg-[#0F766E] border-[#0F766E] text-white'
-                    : isActive
-                    ? 'bg-white border-[#0F766E] text-[#0F766E]'
-                    : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'
+          <div key={s.key} className="flex items-center gap-2 flex-1 last:flex-none">
+            <div className="flex items-baseline gap-1.5 shrink-0">
+              <span
+                className={`font-display text-[15px] font-light tabular-nums leading-none transition-colors ${
+                  active
+                    ? 'text-[#0F766E]'
+                    : done
+                      ? 'text-[#0F766E]'
+                      : 'text-[#9CA3AF]'
                 }`}
               >
-                {isCompleted ? <Check size={12} /> : i + 1}
-              </div>
-              <span className={`text-[10px] whitespace-nowrap ${isActive ? 'text-[#0F766E] font-medium' : 'text-[#9CA3AF]'}`}>
-                {labels[i]}
+                {(i + 1).toString().padStart(2, '0')}
+              </span>
+              <span
+                className={`text-[10px] uppercase tracking-[0.2em] transition-colors ${
+                  active
+                    ? 'text-[#111111] font-medium'
+                    : done
+                      ? 'text-[#0F766E]'
+                      : 'text-[#9CA3AF]'
+                }`}
+              >
+                {zh ? s.zh : s.en}
               </span>
             </div>
-            {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-px mx-1 mb-4 transition-colors ${currentIdx > i ? 'bg-[#0F766E]' : 'bg-[#E5E7EB]'}`} />
+            {i < steps.length - 1 && (
+              <div className="flex-1 h-px bg-[#E5E7EB] relative overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 bg-[#0F766E] transition-all duration-300"
+                  style={{ width: done ? '100%' : active ? '50%' : '0%' }}
+                />
+              </div>
             )}
           </div>
         );
@@ -88,15 +91,23 @@ function StepIndicator({ step, zh }: { step: BookingStep; zh: boolean }) {
   );
 }
 
-// ── Hero + business identity card ───────────────────────────────────────────
-function HeroCard({ business, zh, collapsed }: { business: Business; zh: boolean; collapsed: boolean }) {
+// ── Hero (editorial) ─────────────────────────────────────────────────────────
+function HeroCard({
+  business,
+  zh,
+  collapsed,
+}: {
+  business: Business;
+  zh: boolean;
+  collapsed: boolean;
+}) {
   const emoji = getBusinessTypeEmoji(business.type);
   return (
     <div className="relative">
-      {/* Banner — collapses when a service is picked */}
+      {/* Cover */}
       <div
-        className={`rounded-2xl overflow-hidden bg-[#F3F4F6] shadow-card transition-all duration-300 ease-out ${
-          collapsed ? 'aspect-[16/3] opacity-80' : 'aspect-[16/9]'
+        className={`rounded-2xl overflow-hidden bg-[#F3F4F6] transition-all duration-300 ease-out ${
+          collapsed ? 'aspect-[16/4] opacity-90' : 'aspect-[16/9]'
         }`}
       >
         {business.business_image_url ? (
@@ -111,10 +122,12 @@ function HeroCard({ business, zh, collapsed }: { business: Business; zh: boolean
             {emoji}
           </div>
         )}
+        {/* gradient veil for legibility under overlapping card */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
       </div>
 
-      {/* Identity card overlap */}
-      <div className="-mt-8 mx-3 bg-white rounded-2xl border border-[#E5E7EB] shadow-card p-3.5 flex items-center gap-3 relative">
+      {/* Identity card */}
+      <div className="-mt-10 mx-3 bg-white rounded-2xl border border-[#E5E7EB] shadow-sm px-4 py-3.5 flex items-center gap-3 relative">
         <div className="w-12 h-12 rounded-xl overflow-hidden border border-[#E5E7EB] bg-white shrink-0 flex items-center justify-center">
           {business.logo_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -127,19 +140,16 @@ function HeroCard({ business, zh, collapsed }: { business: Business; zh: boolean
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-[15px] font-semibold text-[#111111] leading-tight truncate">
-            {business.name}
+          <p className="text-[9px] uppercase tracking-[0.22em] text-[#9CA3AF] mb-0.5">
+            {zh ? '預約' : 'Book a visit'}
+          </p>
+          <h1 className="font-display text-[18px] leading-tight font-light text-[#111111] truncate">
+            {business.name}<span className="text-[#0F766E]">.</span>
           </h1>
           {(business.district || business.address_text) && (
-            <div className="flex items-center gap-1 text-xs text-[#6B7280] mt-0.5 truncate">
-              <MapPin size={11} className="text-[#0F766E] shrink-0" />
+            <p className="text-[11px] text-[#6B7280] mt-0.5 truncate inline-flex items-center gap-1">
+              <MapPin size={10} className="text-[#0F766E] shrink-0" />
               <span className="truncate">{business.district || business.address_text}</span>
-            </div>
-          )}
-          {zh && business.name && (
-            <p className="text-[11px] text-[#9CA3AF] mt-0.5 truncate">
-              {/* Subtle subtitle line — phone or business type */}
-              {business.phone || (zh ? '歡迎預約' : 'Welcome — book a visit')}
             </p>
           )}
         </div>
@@ -148,7 +158,7 @@ function HeroCard({ business, zh, collapsed }: { business: Business; zh: boolean
   );
 }
 
-// ── Service grid (2-col tiles) ──────────────────────────────────────────────
+// ── Service tile ─────────────────────────────────────────────────────────────
 function ServiceGrid({
   services,
   selected,
@@ -164,30 +174,30 @@ function ServiceGrid({
 }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      {services.map((svc, i) => {
+      {services.map((svc) => {
         const isSelected = selected?.id === svc.id;
-        const gradient = TILE_GRADIENTS[i % TILE_GRADIENTS.length];
         return (
           <button
             key={svc.id}
             onClick={() => onSelect(svc)}
-            className={`text-left bg-white rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+            className={`group relative text-left bg-white rounded-2xl overflow-hidden border transition-all cursor-pointer ${
               isSelected
-                ? 'border-[#0F766E] shadow-card ring-2 ring-[#0F766E]/10'
-                : 'border-[#E5E7EB] hover:border-[#0F766E]/40'
+                ? 'border-[#0F766E] ring-2 ring-[#0F766E]/15 shadow-sm'
+                : 'border-[#E5E7EB] hover:border-[#0F766E]/40 hover:shadow-sm'
             }`}
           >
-            {/* Tile header */}
-            <div className={`relative aspect-[5/4] ${svc.image_url ? 'bg-[#F3F4F6]' : gradient} flex items-center justify-center overflow-hidden`}>
+            <div className={`relative aspect-[5/4] flex items-center justify-center overflow-hidden ${
+              svc.image_url ? 'bg-[#F3F4F6]' : 'bg-gradient-to-br from-[#FAFAF8] to-[#F3F4F6]'
+            }`}>
               {svc.image_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={svc.image_url}
                   alt={svc.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-[1.02]"
                 />
               ) : (
-                <span className="text-3xl drop-shadow-sm" aria-hidden>
+                <span className="text-3xl opacity-90" aria-hidden>
                   {emoji}
                 </span>
               )}
@@ -196,10 +206,14 @@ function ServiceGrid({
                   <Check size={13} strokeWidth={3} />
                 </div>
               )}
+              {!isSelected && (
+                <div className="absolute top-2 right-2 text-[9px] uppercase tracking-[0.18em] text-[#9CA3AF] bg-white/85 backdrop-blur-sm border border-[#E5E7EB] px-1.5 py-0.5 rounded-full inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Clock size={9} /> {svc.duration_minutes}{zh ? '分' : 'm'}
+                </div>
+              )}
             </div>
-            {/* Body */}
-            <div className="p-3">
-              <p className="text-[13px] font-semibold text-[#111111] leading-tight line-clamp-1">
+            <div className="px-3 py-2.5">
+              <p className="text-[13px] font-medium text-[#111111] leading-tight line-clamp-1">
                 {svc.name}
               </p>
               {svc.name_zh && (
@@ -207,17 +221,17 @@ function ServiceGrid({
               )}
               <div className="flex items-center justify-between mt-1.5">
                 {svc.pricing_type === 'tbc' ? (
-                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
-                    {zh ? '待確認' : 'TBC'}
+                  <span className="text-[10px] uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                    {zh ? '待定' : 'TBC'}
                   </span>
                 ) : svc.price_hkd ? (
-                  <span className="text-[13px] font-bold text-[#0F766E]">
+                  <span className="font-display text-[15px] font-light text-[#0F766E] tabular-nums">
                     {formatPrice(svc.price_hkd)}
                   </span>
                 ) : (
                   <span />
                 )}
-                <span className="text-[10px] text-[#9CA3AF] flex items-center gap-0.5">
+                <span className="text-[10px] text-[#9CA3AF] tabular-nums inline-flex items-center gap-0.5">
                   <Clock size={9} /> {svc.duration_minutes}{zh ? '分' : 'm'}
                 </span>
               </div>
@@ -229,59 +243,64 @@ function ServiceGrid({
   );
 }
 
-// ── Selected service row (compact) ─────────────────────────────────────────
+// ── Selected service row ─────────────────────────────────────────────────────
 function SelectedServiceRow({
   service,
-  index,
   emoji,
   zh,
 }: {
   service: Service;
-  index: number;
   emoji: string;
   zh: boolean;
 }) {
-  const gradient = TILE_GRADIENTS[index % TILE_GRADIENTS.length];
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border-2 border-[#0F766E] shadow-card ring-2 ring-[#0F766E]/10 flex items-center gap-3 p-2.5">
-      <div className={`relative w-14 h-14 rounded-xl ${service.image_url ? 'bg-[#F3F4F6]' : gradient} flex items-center justify-center shrink-0 overflow-hidden`}>
-        {service.image_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-2xl drop-shadow-sm" aria-hidden>{emoji}</span>
-        )}
-        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#0F766E] text-white flex items-center justify-center shadow-sm">
-          <Check size={11} strokeWidth={3} />
+    <div className="relative bg-white rounded-2xl border border-[#0F766E] ring-2 ring-[#0F766E]/10 overflow-hidden">
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#0F766E]" />
+      <div className="pl-4 pr-3 py-3 flex items-center gap-3">
+        <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden ${
+          service.image_url ? 'bg-[#F3F4F6]' : 'bg-gradient-to-br from-[#CCFBF1] to-[#5EEAD4]'
+        }`}>
+          {service.image_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-xl">{emoji}</span>
+          )}
         </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-[#111111] leading-tight truncate">
-          {service.name}
-        </p>
-        {service.name_zh && (
-          <p className="text-[11px] text-[#6B7280] mt-0.5 truncate">{service.name_zh}</p>
-        )}
-        <span className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] text-[#9CA3AF]">
-          <Clock size={9} /> {service.duration_minutes}{zh ? '分' : 'm'}
-        </span>
-      </div>
-      <div className="shrink-0 pr-1">
-        {service.pricing_type === 'tbc' ? (
-          <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
-            {zh ? '待確認' : 'TBC'}
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF]">
+            {zh ? '已選服務' : 'Selected'}
+          </p>
+          <p className="font-display text-[15px] font-light text-[#111111] truncate leading-tight mt-0.5">
+            {service.name}
+          </p>
+          <span className="mt-0.5 text-[10px] text-[#9CA3AF] tabular-nums inline-flex items-center gap-1">
+            <Clock size={9} /> {service.duration_minutes}{zh ? '分' : 'm'}
+            {service.name_zh && (
+              <>
+                <span>·</span>
+                <span className="truncate">{service.name_zh}</span>
+              </>
+            )}
           </span>
-        ) : service.price_hkd ? (
-          <span className="text-[14px] font-bold text-[#0F766E]">
-            {formatPrice(service.price_hkd)}
-          </span>
-        ) : null}
+        </div>
+        <div className="shrink-0 pr-1">
+          {service.pricing_type === 'tbc' ? (
+            <span className="text-[10px] uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+              {zh ? '待定' : 'TBC'}
+            </span>
+          ) : service.price_hkd ? (
+            <span className="font-display text-[18px] font-light text-[#0F766E] tabular-nums">
+              {formatPrice(service.price_hkd)}
+            </span>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Selected date/time row (compact) ───────────────────────────────────────
+// ── Selected date/time row ───────────────────────────────────────────────────
 function SelectedDateTimeRow({
   date,
   time,
@@ -295,37 +314,42 @@ function SelectedDateTimeRow({
   isWaitlist: boolean;
   zh: boolean;
 }) {
-  const accent = isWaitlist
-    ? 'border-amber-400 ring-2 ring-amber-200'
-    : 'border-[#0F766E] ring-2 ring-[#0F766E]/10';
-  const tile = isWaitlist
-    ? 'bg-gradient-to-br from-amber-100 to-amber-200'
-    : 'bg-gradient-to-br from-[#CCFBF1] to-[#5EEAD4]';
-  const checkBg = isWaitlist ? 'bg-amber-500' : 'bg-[#0F766E]';
-
+  const accent = isWaitlist ? '#D97706' : '#0F766E';
   return (
-    <div className={`bg-white rounded-2xl overflow-hidden border-2 ${accent} shadow-card flex items-center gap-3 p-2.5`}>
-      <div className={`relative w-14 h-14 rounded-xl ${tile} flex flex-col items-center justify-center shrink-0`}>
-        <span className="text-[9px] font-medium uppercase text-[#0F766E]/80 leading-none">
-          {format(date, zh ? 'EEE' : 'EEE')}
-        </span>
-        <span className="text-lg font-bold text-[#0F766E] leading-none mt-0.5">
-          {format(date, 'd')}
-        </span>
-        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${checkBg} text-white flex items-center justify-center shadow-sm`}>
-          <Check size={11} strokeWidth={3} />
+    <div
+      className="relative bg-white rounded-2xl border overflow-hidden"
+      style={{ borderColor: accent, boxShadow: `0 0 0 2px ${accent}15` }}
+    >
+      <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: accent }} />
+      <div className="pl-4 pr-3 py-3 flex items-center gap-3">
+        <div className="text-center shrink-0 pr-3 border-r border-dashed border-[#E5E7EB]">
+          <p className="text-[9px] uppercase tracking-[0.22em] text-[#9CA3AF]">
+            {format(date, 'EEE')}
+          </p>
+          <p
+            className="font-display text-[28px] leading-none font-light tabular-nums mt-0.5"
+            style={{ color: accent }}
+          >
+            {format(date, 'd')}
+          </p>
         </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-[#111111] leading-tight truncate">
-          {format(date, zh ? 'M月d日（EEEE）' : 'EEEE, MMM d')}
-        </p>
-        <p className="text-[11px] text-[#6B7280] mt-0.5 truncate">
-          {formatTime(time)}{endTime ? ` – ${formatTime(endTime)}` : ''}
-        </p>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF]">
+            {zh ? '已選時間' : 'Selected'}
+          </p>
+          <p className="font-display text-[15px] font-light text-[#111111] truncate leading-tight mt-0.5 tabular-nums">
+            {formatTime(time)}{endTime ? <span className="text-[#9CA3AF]"> → {formatTime(endTime)}</span> : ''}
+          </p>
+          <p className="text-[10px] text-[#9CA3AF] mt-0.5 truncate">
+            {format(date, zh ? 'M月d日 EEEE' : 'EEEE, MMM d')}
+          </p>
+        </div>
         {isWaitlist && (
-          <span className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-700">
-            <Users size={9} /> {zh ? '輪候' : 'Waitlist'}
+          <span
+            className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full"
+            style={{ background: '#FEF3C7', color: '#92400E' }}
+          >
+            <Users size={10} /> {zh ? '輪候' : 'Waitlist'}
           </span>
         )}
       </div>
@@ -333,7 +357,7 @@ function SelectedDateTimeRow({
   );
 }
 
-// ── Date strip (horizontal scroll) ──────────────────────────────────────────
+// ── Date strip ───────────────────────────────────────────────────────────────
 function DateStrip({
   selectedDate,
   onSelect,
@@ -350,7 +374,6 @@ function DateStrip({
   const dayLabelsEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const labels = zh ? dayLabelsZh : dayLabelsEn;
 
-  // Show next 14 days from today (cap at maxDate).
   const days = useMemo(() => {
     const out: Date[] = [];
     for (let i = 0; i < 14; i++) {
@@ -361,7 +384,6 @@ function DateStrip({
     return out;
   }, [today, maxDate]);
 
-  // Auto-scroll selected day into view.
   const scrollerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scrollerRef.current?.querySelector<HTMLButtonElement>('[data-selected="true"]');
@@ -371,32 +393,45 @@ function DateStrip({
   return (
     <div
       ref={scrollerRef}
-      className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory scroll-smooth"
+      className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory scroll-smooth"
       style={{ scrollbarWidth: 'none' }}
     >
       {days.map((day) => {
         const isSelected = isSameDay(day, selectedDate);
         const todayDay = isToday(day);
+        const isWeekend = getDay(day) === 0 || getDay(day) === 6;
         return (
           <button
             key={day.toISOString()}
             data-selected={isSelected}
             onClick={() => onSelect(day)}
-            className={`shrink-0 snap-start w-14 py-2.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-colors border ${
+            className={`shrink-0 snap-start w-[52px] py-2.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all border ${
               isSelected
-                ? 'bg-[#0F766E] border-[#0F766E] text-white shadow-card'
+                ? 'bg-[#111111] border-[#111111] text-white'
                 : 'bg-white border-[#E5E7EB] text-[#3D3D3D] hover:border-[#0F766E]/40'
             }`}
           >
-            <span className={`text-[10px] font-medium uppercase ${isSelected ? 'text-white/85' : 'text-[#9CA3AF]'}`}>
+            <span
+              className={`text-[9px] uppercase tracking-[0.18em] leading-none ${
+                isSelected
+                  ? 'text-white/70'
+                  : isWeekend
+                    ? 'text-[#9CA3AF]'
+                    : 'text-[#6B7280]'
+              }`}
+            >
               {labels[getDay(day)]}
             </span>
-            <span className="text-base font-semibold leading-none">{format(day, 'd')}</span>
-            <span className={`mt-1 w-1.5 h-1.5 rounded-full ${
-              todayDay
-                ? isSelected ? 'bg-white' : 'bg-[#0F766E]'
-                : 'bg-transparent'
-            }`} />
+            <span className="font-display text-[18px] font-light leading-none mt-1.5 tabular-nums">
+              {format(day, 'd')}
+            </span>
+            <span
+              className={`mt-1 w-1 h-1 rounded-full ${
+                todayDay
+                  ? isSelected ? 'bg-white' : 'bg-[#0F766E]'
+                  : 'bg-transparent'
+              }`}
+            />
           </button>
         );
       })}
@@ -404,7 +439,7 @@ function DateStrip({
   );
 }
 
-// ── Full calendar (collapsed/expanded) ──────────────────────────────────────
+// ── Calendar picker ──────────────────────────────────────────────────────────
 function CalendarPicker({
   selectedDate,
   onSelect,
@@ -420,7 +455,7 @@ function CalendarPicker({
   const today = startOfDay(new Date());
   const dayLabels = zh
     ? ['日', '一', '二', '三', '四', '五', '六']
-    : ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   const monthStart = startOfMonth(viewMonth);
   const monthEnd = endOfMonth(viewMonth);
@@ -429,32 +464,35 @@ function CalendarPicker({
   const allCells = [...Array(startPad).fill(null), ...days];
 
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-2xl p-3">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-[#111111]">
-          {format(viewMonth, zh ? 'yyyy年 M月' : 'MMMM yyyy')}
-        </h3>
-        <div className="flex gap-1">
-          <button
-            onClick={() => setViewMonth(subMonths(viewMonth, 1))}
-            disabled={isBefore(endOfMonth(subMonths(viewMonth, 1)), today)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <button
-            onClick={() => setViewMonth(addMonths(viewMonth, 1))}
-            disabled={isBefore(maxDate, startOfMonth(addMonths(viewMonth, 1)))}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronRight size={14} />
-          </button>
+    <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => setViewMonth(subMonths(viewMonth, 1))}
+          disabled={isBefore(endOfMonth(subMonths(viewMonth, 1)), today)}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft size={14} />
+        </button>
+        <div className="flex items-baseline gap-2">
+          <h3 className="font-display text-[18px] font-light text-[#111111] tabular-nums">
+            {format(viewMonth, zh ? 'M月' : 'MMMM')}
+          </h3>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF] tabular-nums">
+            {format(viewMonth, 'yyyy')}
+          </span>
         </div>
+        <button
+          onClick={() => setViewMonth(addMonths(viewMonth, 1))}
+          disabled={isBefore(maxDate, startOfMonth(addMonths(viewMonth, 1)))}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B7280] hover:bg-[#F3F4F6] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight size={14} />
+        </button>
       </div>
 
       <div className="grid grid-cols-7 mb-1">
-        {dayLabels.map((d) => (
-          <div key={d} className="text-center text-[11px] font-medium text-[#9CA3AF] py-0.5">
+        {dayLabels.map((d, i) => (
+          <div key={`${d}-${i}`} className="text-center text-[10px] uppercase tracking-[0.18em] font-medium text-[#9CA3AF] py-1">
             {d}
           </div>
         ))}
@@ -474,14 +512,14 @@ function CalendarPicker({
               key={day.toISOString()}
               onClick={() => { if (!disabled) onSelect(day); }}
               disabled={disabled}
-              className={`h-9 flex items-center justify-center text-sm rounded-lg font-medium transition-colors ${
+              className={`h-9 flex items-center justify-center text-sm rounded-lg tabular-nums transition-colors ${
                 isSelected
-                  ? 'bg-[#0F766E] text-white'
+                  ? 'bg-[#0F766E] text-white font-medium'
                   : todayDay && !disabled
-                  ? 'border-2 border-[#0F766E] text-[#0F766E]'
-                  : disabled
-                  ? 'text-[#D1D5DB] cursor-not-allowed'
-                  : 'text-[#3D3D3D] hover:bg-[#CCFBF1] hover:text-[#0F766E]'
+                    ? 'border border-[#0F766E] text-[#0F766E] font-medium'
+                    : disabled
+                      ? 'text-[#D1D5DB] cursor-not-allowed'
+                      : 'text-[#3D3D3D] hover:bg-[#0F766E]/5 hover:text-[#0F766E]'
               }`}
             >
               {format(day, 'd')}
@@ -489,6 +527,31 @@ function CalendarPicker({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ── Section eyebrow ──────────────────────────────────────────────────────────
+function SectionHead({
+  step,
+  title,
+  action,
+}: {
+  step: string;
+  title: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline justify-between mb-3">
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF] font-medium mb-0.5">
+          {step}
+        </p>
+        <h2 className="font-display text-[18px] font-light text-[#111111] leading-tight">
+          {title}
+        </h2>
+      </div>
+      {action}
     </div>
   );
 }
@@ -526,7 +589,6 @@ function BookingFlow() {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUploadError, setImageUploadError] = useState('');
 
-  // ── Waitlist state ─────────────────────────────────────────────────────────
   const [isWaitlistSlot, setIsWaitlistSlot] = useState(false);
   const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
 
@@ -580,7 +642,12 @@ function BookingFlow() {
 
   const loadBusiness = async () => {
     const supabase = createClient();
-    const { data: biz } = await supabase.from('businesses').select('*').eq('slug', slug).eq('onboarding_complete', true).single();
+    const { data: biz } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
     if (!biz) { setNotFound(true); setLoading(false); return; }
     setBusiness(biz);
     const [{ data: svc }, { data: wh }, { data: questionRows }] = await Promise.all([
@@ -598,12 +665,11 @@ function BookingFlow() {
     );
     setLoading(false);
 
-    // ── Pre-fill slot from WhatsApp waitlist notification link ─────────────
-    // Link format: /book/[slug]?date=YYYY-MM-DD&time=HH:MM&service=UUID&wt=WAITLIST_ID
+    // ── Pre-fill slot from waitlist notification link ─────────────────────
     if (typeof window !== 'undefined' && svc) {
       const urlParams = new URLSearchParams(window.location.search);
-      const pDate    = urlParams.get('date');
-      const pTime    = urlParams.get('time');
+      const pDate = urlParams.get('date');
+      const pTime = urlParams.get('time');
       const pService = urlParams.get('service');
 
       if (pDate && pTime && pService) {
@@ -613,7 +679,6 @@ function BookingFlow() {
           setSelectedService(prefillService);
           setSelectedDate(prefillDate);
           setSelectedTime(pTime);
-          // Stay on 'select' — the form is now inline beneath the date/time row.
         }
       }
     }
@@ -629,7 +694,10 @@ function BookingFlow() {
     ]);
     const dayOfWeek = date.getDay();
     const dayHours = hours.find((h) => h.day_of_week === dayOfWeek);
-    if (!dayHours || !dayHours.is_open || !dayHours.open_time || !dayHours.close_time) { setAvailableSlots([]); return; }
+    if (!dayHours || !dayHours.is_open || !dayHours.open_time || !dayHours.close_time) {
+      setAvailableSlots([]);
+      return;
+    }
     const slots: SlotInfo[] = [];
     const openMin = timeToMinutes(dayHours.open_time);
     const closeMin = timeToMinutes(dayHours.close_time);
@@ -637,15 +705,25 @@ function BookingFlow() {
     const breakEndMin = dayHours.break_end ? timeToMinutes(dayHours.break_end) : null;
     const duration = selectedService.duration_minutes;
     const buffer = business.buffer_minutes || 0;
-    const nowMin = isToday(date) ? new Date().getHours() * 60 + new Date().getMinutes() + (business.min_advance_hours * 60) : 0;
+    const nowMin = isToday(date)
+      ? new Date().getHours() * 60 + new Date().getMinutes() + (business.min_advance_hours * 60)
+      : 0;
     for (let startMin = openMin; startMin + duration <= closeMin; startMin += 30) {
       const endMin = startMin + duration;
       const slotTime = `${String(Math.floor(startMin / 60)).padStart(2, '0')}:${String(startMin % 60).padStart(2, '0')}`;
       if (startMin < nowMin) continue;
       const inBreak = breakStartMin !== null && breakEndMin !== null && startMin < breakEndMin && endMin > breakStartMin;
       if (inBreak) continue;
-      const hasConflict = (bookings || []).some((b) => { const bStart = timeToMinutes(b.start_time); const bEnd = timeToMinutes(b.end_time) + buffer; return startMin < bEnd && endMin > bStart; });
-      const isBlocked  = (blocked  || []).some((b) => { const bStart = timeToMinutes(b.start_time); const bEnd = timeToMinutes(b.end_time); return startMin < bEnd && endMin > bStart; });
+      const hasConflict = (bookings || []).some((b) => {
+        const bStart = timeToMinutes(b.start_time);
+        const bEnd = timeToMinutes(b.end_time) + buffer;
+        return startMin < bEnd && endMin > bStart;
+      });
+      const isBlocked = (blocked || []).some((b) => {
+        const bStart = timeToMinutes(b.start_time);
+        const bEnd = timeToMinutes(b.end_time);
+        return startMin < bEnd && endMin > bStart;
+      });
       slots.push({
         time: slotTime,
         available: !hasConflict && !isBlocked,
@@ -655,7 +733,6 @@ function BookingFlow() {
     setAvailableSlots(slots);
   }, [business, selectedService, hours]);
 
-  // Load slots whenever the user has both a service and a date in 'select' step.
   useEffect(() => {
     if (step === 'select' && selectedService) loadSlotsForDate(selectedDate);
   }, [selectedDate, step, selectedService, loadSlotsForDate]);
@@ -754,7 +831,9 @@ function BookingFlow() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
-        <div className="text-sm text-[#6B7280] animate-pulse">{t('loading')}</div>
+        <div className="text-sm text-[#9CA3AF] animate-pulse uppercase tracking-[0.2em]">
+          {t('loading')}
+        </div>
       </div>
     );
   }
@@ -763,10 +842,26 @@ function BookingFlow() {
   if (notFound) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8] px-4">
-        <div className="text-center max-w-sm bg-white border border-[#E5E7EB] rounded-2xl p-8">
-          <p className="text-4xl mb-4">🔍</p>
-          <h2 className="text-lg font-semibold text-[#111111] mb-2">{zh ? '找不到此商戶' : 'Business not found'}</h2>
-          <p className="text-sm text-[#6B7280]">{zh ? '此預約連結可能無效。' : 'This booking link may be invalid.'}</p>
+        <div className="relative bg-white border border-[#E5E7EB] rounded-2xl p-10 text-center max-w-sm overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-[0.4] pointer-events-none"
+            style={{
+              backgroundImage: 'radial-gradient(#E5E7EB 1px, transparent 1px)',
+              backgroundSize: '14px 14px',
+              maskImage: 'radial-gradient(circle at center, black, transparent 75%)',
+              WebkitMaskImage: 'radial-gradient(circle at center, black, transparent 75%)',
+            }}
+          />
+          <div className="relative">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[#9CA3AF] mb-2">404</p>
+            <h2 className="font-display text-2xl font-light text-[#111111]">
+              {zh ? '找不到此商戶' : 'Not found'}<span className="text-[#0F766E]">.</span>
+            </h2>
+            <p className="text-sm text-[#6B7280] mt-2">
+              {zh ? '此預約連結可能無效。' : 'This booking link may be invalid.'}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -775,126 +870,148 @@ function BookingFlow() {
   // ── Done ──
   if (step === 'done') {
     const isWaitlistDone = waitlistPosition !== null;
+    const accent = isWaitlistDone ? '#D97706' : '#0F766E';
 
     return (
-      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center px-4">
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 text-center max-w-sm w-full shadow-card">
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center px-4 py-10">
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl max-w-sm w-full overflow-hidden shadow-sm">
+          {/* status edge */}
+          <div className="h-1 w-full" style={{ background: accent }} />
 
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 ${isWaitlistDone ? 'bg-amber-50' : 'bg-[#D1FAE5]'}`}>
-            {isWaitlistDone
-              ? <Users className="text-amber-600" size={24} />
-              : <Check className="text-[#065F46]" size={24} />
-            }
+          <div className="relative p-7 text-center">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-[0.4] pointer-events-none"
+              style={{
+                backgroundImage: 'radial-gradient(#E5E7EB 1px, transparent 1px)',
+                backgroundSize: '14px 14px',
+                maskImage: 'radial-gradient(circle at top, black, transparent 75%)',
+                WebkitMaskImage: 'radial-gradient(circle at top, black, transparent 75%)',
+              }}
+            />
+            <div className="relative">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: `${accent}15` }}
+              >
+                {isWaitlistDone
+                  ? <Users style={{ color: accent }} size={24} />
+                  : <Check style={{ color: accent }} size={26} strokeWidth={2.5} />
+                }
+              </div>
+
+              <p className="text-[10px] uppercase tracking-[0.22em] text-[#9CA3AF] mb-2">
+                {isWaitlistDone
+                  ? (zh ? '已加入輪候名單' : 'Waitlist · Joined')
+                  : (zh ? '預約已送出' : 'Booking · Submitted')}
+              </p>
+              <h2 className="font-display text-2xl font-light text-[#111111] mb-1">
+                {isWaitlistDone
+                  ? (zh ? '感謝你' : 'You\'re on the list')
+                  : t('bookingConfirmed')}
+                <span style={{ color: accent }}>.</span>
+              </h2>
+              <p className="text-sm text-[#6B7280]">
+                {isWaitlistDone
+                  ? (zh ? '若有人取消預約，我們會透過 WhatsApp 通知你。' : 'We\'ll WhatsApp you the moment a slot opens.')
+                  : t('bookingConfirmedDesc')}
+              </p>
+            </div>
           </div>
 
           {isWaitlistDone ? (
-            <>
-              <h2 className="text-xl font-semibold text-[#111111] mb-1">
-                {zh ? '已加入輪候名單！' : 'Added to Waitlist!'}
-              </h2>
-              <p className="text-sm text-[#6B7280] mb-4">
-                {zh
-                  ? '若有人取消預約，我們將透過 WhatsApp 通知你。'
-                  : 'If a cancellation occurs, we\'ll notify you via WhatsApp.'}
-              </p>
-
-              <div className="flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 mb-6">
-                <Timer size={20} className="text-amber-600 shrink-0" />
+            <div className="px-7 pb-2">
+              <div className="rounded-xl p-4 flex items-start gap-3" style={{ background: '#FEF3C7', border: '1px solid #FDE68A' }}>
+                <Timer size={18} className="mt-0.5 shrink-0" style={{ color: accent }} />
                 <div className="text-left">
-                  <p className="text-base font-bold text-amber-700">
+                  <p className="font-display text-base font-light" style={{ color: '#92400E' }}>
                     {zh
-                      ? `你是第 #${waitlistPosition} 位候補`
-                      : `You're #${waitlistPosition} on the waitlist`}
+                      ? <>你是第 <span className="tabular-nums font-medium">#{waitlistPosition}</span> 位候補</>
+                      : <>You&rsquo;re <span className="tabular-nums font-medium">#{waitlistPosition}</span> on the list</>}
                   </p>
-                  <p className="text-xs text-amber-600 mt-0.5">
+                  <p className="text-[11px] mt-1" style={{ color: '#92400E', opacity: 0.85 }}>
                     {zh
                       ? '有空位時你將收到 WhatsApp 通知，並有 30 分鐘完成預約。'
-                      : 'You\'ll get a WhatsApp alert when a slot opens. You\'ll have 30 minutes to book.'}
+                      : 'When a spot opens, you\'ll have 30 minutes to confirm.'}
                   </p>
                 </div>
               </div>
-
-              {selectedService && (
-                <div className="bg-[#F9FAFB] rounded-xl p-4 mb-2 text-left space-y-2.5">
-                  {[
-                    [zh ? '服務' : 'Service', zh && selectedService.name_zh ? selectedService.name_zh : selectedService.name],
-                    [zh ? '日期' : 'Date', format(selectedDate, 'MMM d, yyyy')],
-                    [zh ? '時間' : 'Time', formatTime(selectedTime)],
-                    [zh ? '姓名' : 'Name', customerName],
-                  ].map(([label, value]) => (
-                    <div key={label} className="flex justify-between text-sm">
-                      <span className="text-[#6B7280]">{label}</span>
-                      <span className="font-medium text-[#111111]">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
+            </div>
           ) : (
-            <>
-              <h2 className="text-xl font-semibold text-[#111111] mb-1">{t('bookingConfirmed')}</h2>
-              <p className="text-sm text-[#6B7280] mb-6">{t('bookingConfirmedDesc')}</p>
-              <p className="text-xs text-[#0F766E] bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl px-3 py-2 mb-6">
-                {bookingSubmittedMessage || t('bookingPendingNote')}
-              </p>
-              {selectedService && (
-                <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6 text-left space-y-2.5">
-                  {[
-                    [t('service'), zh && selectedService.name_zh ? selectedService.name_zh : selectedService.name],
-                    [t('date'), format(selectedDate, 'MMM d, yyyy')],
-                    [t('time'), formatTime(selectedTime)],
-                  ].map(([label, value]) => (
-                    <div key={label} className="flex justify-between text-sm">
-                      <span className="text-[#6B7280]">{label}</span>
-                      <span className="font-medium text-[#111111]">{value}</span>
-                    </div>
-                  ))}
+            <div className="px-7">
+              <div
+                className="rounded-xl p-3 text-xs flex items-start gap-2"
+                style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46' }}
+              >
+                <Sparkles size={13} className="mt-0.5 shrink-0 text-[#0F766E]" />
+                <span>{bookingSubmittedMessage || t('bookingPendingNote')}</span>
+              </div>
+            </div>
+          )}
+
+          {selectedService && (
+            <div className="m-7 mt-5 rounded-xl border border-[#E5E7EB] p-4 text-left space-y-2.5">
+              {[
+                [isWaitlistDone ? (zh ? '服務' : 'Service') : t('service'), zh && selectedService.name_zh ? selectedService.name_zh : selectedService.name],
+                [isWaitlistDone ? (zh ? '日期' : 'Date') : t('date'), format(selectedDate, 'MMM d, yyyy')],
+                [isWaitlistDone ? (zh ? '時間' : 'Time') : t('time'), formatTime(selectedTime)],
+                ...(isWaitlistDone ? [[zh ? '姓名' : 'Name', customerName] as [string, string]] : []),
+              ].map(([label, value], i) => (
+                <div
+                  key={label}
+                  className={`flex justify-between text-sm ${i > 0 ? 'pt-2.5 border-t border-dashed border-[#F3F4F6]' : ''}`}
+                >
+                  <span className="text-[#9CA3AF] text-[12px]">{label}</span>
+                  <span className="font-medium text-[#111111]">{value}</span>
                 </div>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </div>
       </div>
     );
   }
 
-  // Selection complete → enable Book Now CTA
   const canProceedFromSelect = Boolean(selectedService && selectedTime);
   const ctaWaitlist = canProceedFromSelect && isWaitlistSlot;
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
-      {/* ── Top utility bar (slim) ── */}
-      <div className="bg-[#FAFAF8] sticky top-0 z-20 backdrop-blur-sm bg-opacity-90">
+      {/* ── Top utility bar ── */}
+      <div className="bg-[#FAFAF8]/85 backdrop-blur-md sticky top-0 z-20 border-b border-transparent">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="text-[11px] font-medium text-[#9CA3AF] uppercase tracking-wide">
-            {zh ? '預約' : 'Booking'}
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-[15px] font-light text-[#111111]">
+              BookEasy<span className="text-[#0F766E]">.</span>
+            </span>
+            <span className="text-[9px] uppercase tracking-[0.22em] text-[#9CA3AF]">
+              {zh ? '預約' : 'Book'}
+            </span>
           </div>
           <LanguageToggle />
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 pb-32">
-        {/* Hero + business identity */}
+        {/* Hero */}
         {business && step === 'select' && (
-          <div className="mb-5">
+          <div className="mb-6">
             <HeroCard business={business} zh={zh} collapsed={Boolean(selectedService)} />
           </div>
         )}
 
-        {/* Step indicator */}
-        <StepIndicator step={step} zh={zh} />
+        {/* Step rail */}
+        <StepRail step={step} zh={zh} />
 
-        {/* ── Step: Select (services + date + time) ── */}
+        {/* ── Step: Select ── */}
         {step === 'select' && (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-7 animate-fade-in">
             {/* Services */}
             <section>
-              <div className="flex items-baseline justify-between mb-3">
-                <h2 className="text-[15px] font-semibold text-[#111111]">
-                  {t('selectService')}
-                </h2>
-                {selectedService ? (
+              <SectionHead
+                step={zh ? '01 · 服務' : '01 · Service'}
+                title={t('selectService')}
+                action={selectedService ? (
                   <button
                     onClick={() => {
                       setSelectedService(null);
@@ -902,18 +1019,15 @@ function BookingFlow() {
                       setIsWaitlistSlot(false);
                       setQuestionAnswers({});
                     }}
-                    className="text-[11px] font-medium text-[#0F766E] hover:underline"
+                    className="text-[10px] uppercase tracking-[0.18em] text-[#0F766E] hover:underline cursor-pointer"
                   >
-                    {zh ? '重新選擇' : 'Reselect service'}
+                    {zh ? '更改' : 'Change'}
                   </button>
-                ) : zh ? (
-                  <span className="text-[11px] text-[#9CA3AF]">選擇服務</span>
                 ) : null}
-              </div>
+              />
               {selectedService ? (
                 <SelectedServiceRow
                   service={selectedService}
-                  index={services.findIndex((s) => s.id === selectedService.id)}
                   emoji={businessEmoji}
                   zh={zh}
                 />
@@ -933,32 +1047,31 @@ function BookingFlow() {
               )}
             </section>
 
-            {/* Date + Time (revealed once a service is picked) */}
+            {/* Date + Time */}
             {selectedService && (
               <section className="animate-fade-up">
-                <div className="flex items-baseline justify-between mb-3">
-                  <h2 className="text-[15px] font-semibold text-[#111111]">
-                    {t('selectDateTime')}
-                  </h2>
-                  {selectedTime ? (
+                <SectionHead
+                  step={zh ? '02 · 日期與時間' : '02 · Date & time'}
+                  title={t('selectDateTime')}
+                  action={selectedTime ? (
                     <button
                       onClick={() => { setSelectedTime(''); setIsWaitlistSlot(false); }}
-                      className="text-[11px] font-medium text-[#0F766E] hover:underline"
+                      className="text-[10px] uppercase tracking-[0.18em] text-[#0F766E] hover:underline cursor-pointer"
                     >
-                      {zh ? '重新選擇' : 'Reselect time'}
+                      {zh ? '更改' : 'Change'}
                     </button>
                   ) : (
                     <button
                       onClick={() => setShowFullCalendar((v) => !v)}
-                      className="text-[11px] font-medium text-[#0F766E] hover:underline flex items-center gap-1"
+                      className="text-[10px] uppercase tracking-[0.18em] text-[#0F766E] hover:underline inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Calendar size={11} />
                       {showFullCalendar
                         ? (zh ? '收起' : 'Collapse')
-                        : (zh ? '更多日期' : 'More dates')}
+                        : (zh ? '更多日期' : 'Calendar')}
                     </button>
                   )}
-                </div>
+                />
 
                 {selectedTime ? (
                   <SelectedDateTimeRow
@@ -973,29 +1086,46 @@ function BookingFlow() {
                     {showFullCalendar ? (
                       <CalendarPicker
                         selectedDate={selectedDate}
-                        onSelect={(d) => { setSelectedDate(d); setSelectedTime(''); setIsWaitlistSlot(false); setShowFullCalendar(false); }}
+                        onSelect={(d) => {
+                          setSelectedDate(d);
+                          setSelectedTime('');
+                          setIsWaitlistSlot(false);
+                          setShowFullCalendar(false);
+                        }}
                         maxDate={maxDate}
                         zh={zh}
                       />
                     ) : (
                       <DateStrip
                         selectedDate={selectedDate}
-                        onSelect={(d) => { setSelectedDate(d); setSelectedTime(''); setIsWaitlistSlot(false); }}
+                        onSelect={(d) => {
+                          setSelectedDate(d);
+                          setSelectedTime('');
+                          setIsWaitlistSlot(false);
+                        }}
                         maxDate={maxDate}
                         zh={zh}
                       />
                     )}
 
                     {/* Time slots */}
-                    <div className="mt-4">
-                      <p className="text-[11px] font-medium text-[#6B7280] uppercase tracking-wide mb-2">
-                        {format(selectedDate, zh ? 'M月d日（EEE）' : 'EEE, MMM d')}
-                      </p>
+                    <div className="mt-5">
+                      <div className="flex items-baseline justify-between mb-3">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF] font-medium">
+                          {format(selectedDate, zh ? 'M月d日 EEEE' : 'EEEE, MMM d')}
+                        </p>
+                        {availableSlots.length > 0 && (
+                          <p className="text-[10px] text-[#9CA3AF] tabular-nums">
+                            {availableSlots.filter((s) => s.available).length} {zh ? '個可選' : 'available'}
+                          </p>
+                        )}
+                      </div>
+
                       {availableSlots.length === 0 ? (
-                        <div className="text-center py-8 text-[#6B7280] bg-white border border-[#E5E7EB] rounded-2xl">
-                          <Calendar size={24} className="mx-auto mb-2 opacity-40" />
-                          <p className="text-sm">{t('noAvailableSlots')}</p>
-                          <p className="text-xs mt-1 opacity-70">{t('selectAnotherDate')}</p>
+                        <div className="text-center py-10 text-[#9CA3AF] bg-white border border-dashed border-[#E5E7EB] rounded-2xl">
+                          <Calendar size={26} className="mx-auto mb-2 opacity-30" />
+                          <p className="font-display text-base font-light text-[#111111]">{t('noAvailableSlots')}</p>
+                          <p className="text-xs mt-1">{t('selectAnotherDate')}</p>
                         </div>
                       ) : (
                         <>
@@ -1006,7 +1136,7 @@ function BookingFlow() {
                                   <button
                                     key={slot.time}
                                     onClick={() => { setSelectedTime(slot.time); setIsWaitlistSlot(false); }}
-                                    className="py-2.5 rounded-xl text-[12px] font-medium transition-colors bg-white border border-[#E5E7EB] text-[#3D3D3D] hover:border-[#0F766E] hover:text-[#0F766E]"
+                                    className="py-2.5 rounded-xl text-[12px] font-medium tabular-nums transition-all bg-white border border-[#E5E7EB] text-[#3D3D3D] hover:border-[#0F766E] hover:text-[#0F766E] hover:shadow-sm"
                                   >
                                     {formatTime(slot.time)}
                                   </button>
@@ -1019,10 +1149,10 @@ function BookingFlow() {
                                     key={slot.time}
                                     onClick={() => { setSelectedTime(slot.time); setIsWaitlistSlot(true); }}
                                     title={zh ? '此時段已滿，可加入輪候' : 'Slot full — join waitlist'}
-                                    className="py-1.5 rounded-xl text-[12px] font-medium transition-colors leading-tight bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100"
+                                    className="py-1.5 rounded-xl text-[12px] font-medium tabular-nums transition-all leading-tight bg-amber-50/70 border border-dashed border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400"
                                   >
                                     <span className="block">{formatTime(slot.time)}</span>
-                                    <span className="text-[9px] mt-0.5 flex items-center justify-center gap-0.5">
+                                    <span className="text-[9px] mt-0.5 inline-flex items-center justify-center gap-0.5 uppercase tracking-wider">
                                       <Users size={8} /> {zh ? '輪候' : 'Waitlist'}
                                     </span>
                                   </button>
@@ -1033,7 +1163,7 @@ function BookingFlow() {
                                 <button
                                   key={slot.time}
                                   disabled
-                                  className="py-2.5 rounded-xl text-[12px] font-medium bg-[#F9FAFB] text-[#D1D5DB] border border-[#F3F4F6] cursor-not-allowed line-through"
+                                  className="py-2.5 rounded-xl text-[12px] font-medium tabular-nums bg-[#F9FAFB] text-[#D1D5DB] border border-[#F3F4F6] cursor-not-allowed line-through"
                                 >
                                   {formatTime(slot.time)}
                                 </button>
@@ -1042,12 +1172,10 @@ function BookingFlow() {
                           </div>
 
                           {availableSlots.some((s) => s.waitlistable) && (
-                            <div className="mt-3 flex items-center gap-1.5 text-[10px] text-[#9CA3AF]">
-                              <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
-                                <Users size={9} /> {zh ? '輪候' : 'Waitlist'}
-                              </span>
-                              <span>{zh ? '＝ 此時段已滿' : '= Fully booked — join waitlist'}</span>
-                            </div>
+                            <p className="mt-3 text-[10px] text-[#9CA3AF] inline-flex items-center gap-1.5">
+                              <span className="inline-block w-2 h-2 rounded-full bg-amber-300" />
+                              {zh ? '虛線 = 此時段已滿，可加入輪候' : 'Dashed border = fully booked, waitlist available'}
+                            </p>
                           )}
                         </>
                       )}
@@ -1059,45 +1187,69 @@ function BookingFlow() {
 
             {/* WhatsApp reminder banner */}
             {selectedService && selectedTime && (
-              <div className="flex items-center gap-2.5 bg-[#ECFDF5] border border-[#A7F3D0] rounded-2xl px-3.5 py-3 animate-fade-in">
-                <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-3 bg-gradient-to-r from-[#ECFDF5] to-white border border-[#A7F3D0] rounded-2xl px-4 py-3 animate-fade-in">
+                <div className="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center shrink-0 shadow-sm">
                   <MessageCircle size={16} className="text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#065F46]">
-                    {zh ? 'WhatsApp 自動提醒' : 'WhatsApp reminder scheduled'}
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#065F46] font-medium">
+                    {zh ? 'WhatsApp 自動提醒' : 'Auto reminder'}
                   </p>
-                  <p className="text-[10px] text-[#047857]">
-                    {zh ? '預約確認後將透過 WhatsApp 提醒你' : 'You\'ll be reminded via WhatsApp'}
+                  <p className="text-[12px] text-[#047857] mt-0.5">
+                    {zh ? '預約確認後將透過 WhatsApp 提醒你' : 'We\'ll remind you on WhatsApp before your visit.'}
                   </p>
                 </div>
               </div>
             )}
 
-            {/* ── Inline details form (revealed once service + time chosen) ── */}
+            {/* ── Inline details form ── */}
             {selectedService && selectedTime && (
               <section className="animate-fade-up">
-                <h2 className="text-[15px] font-semibold text-[#111111] mb-3">{t('yourDetails')}</h2>
+                <SectionHead
+                  step={zh ? '03 · 你的資料' : '03 · Your details'}
+                  title={t('yourDetails')}
+                />
 
-                <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 space-y-4">
-                  <Input id="customerName" label={t('name')} value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder={zh ? '你的姓名' : 'Your name'} required />
+                <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 space-y-5">
+                  <Input
+                    id="customerName"
+                    label={t('name')}
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder={zh ? '你的姓名' : 'Your name'}
+                    required
+                  />
+
                   <div className="space-y-1.5">
-                    <label htmlFor="customerPhone" className="block text-xs font-medium text-[#3D3D3D]">
-                      WhatsApp {isWaitlistSlot && <span className="text-amber-600 font-normal">({zh ? '通知用' : 'for notifications'})</span>}
+                    <label htmlFor="customerPhone" className="block text-sm font-medium text-[#3D3D3D] inline-flex items-center gap-1.5">
+                      <PhoneIcon size={11} className="text-[#9CA3AF]" />
+                      WhatsApp
+                      {isWaitlistSlot && (
+                        <span className="text-amber-600 font-normal text-[10px] uppercase tracking-wider">
+                          ({zh ? '通知用' : 'for notifications'})
+                        </span>
+                      )}
                     </label>
-                    <Input id="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="+852 9XXX XXXX" required />
+                    <Input
+                      id="customerPhone"
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="+852 9XXX XXXX"
+                      required
+                    />
                   </div>
 
                   {!isWaitlistSlot && (
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-medium text-[#3D3D3D]">
-                        {t('notes')} <span className="text-[#9CA3AF] font-normal">({t('optional')})</span>
+                      <label className="block text-sm font-medium text-[#3D3D3D]">
+                        {t('notes')} <span className="text-[#9CA3AF] font-normal text-[10px] uppercase tracking-wider ml-1">({t('optional')})</span>
                       </label>
                       <textarea
                         value={customerNotes}
                         onChange={(e) => setCustomerNotes(e.target.value)}
                         placeholder={t('notesPlaceholder')}
-                        rows={1}
+                        rows={2}
                         className="w-full px-3.5 py-2.5 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#111111] placeholder:text-[#D1D5DB] focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E] resize-none"
                       />
                     </div>
@@ -1105,28 +1257,28 @@ function BookingFlow() {
 
                   {!isWaitlistSlot && selectedService?.allow_customer_image && (
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-medium text-[#3D3D3D]">
-                        {zh ? '上傳圖片' : 'Upload Image'}
-                        <span className="text-[#9CA3AF] font-normal ml-1">({t('optional')})</span>
+                      <label className="block text-sm font-medium text-[#3D3D3D]">
+                        {zh ? '上傳參考圖片' : 'Reference photo'}
+                        <span className="text-[#9CA3AF] font-normal text-[10px] uppercase tracking-wider ml-1">({t('optional')})</span>
                       </label>
                       {customerImageUrl ? (
-                        <div className="relative w-full">
+                        <div className="relative w-full rounded-xl border border-[#E5E7EB] p-1.5 bg-white">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={customerImageUrl}
                             alt={zh ? '已上傳圖片' : 'Uploaded image'}
-                            className="w-full h-44 object-cover rounded-xl border border-[#E5E7EB]"
+                            className="w-full h-44 object-cover rounded-lg"
                           />
                           <button
                             type="button"
                             onClick={() => setCustomerImageUrl('')}
-                            className="absolute top-2 right-2 bg-white border border-[#E5E7EB] rounded-full p-1 hover:bg-red-50 text-[#6B7280] hover:text-red-500 transition-colors shadow-sm"
+                            className="absolute top-2.5 right-2.5 bg-white border border-[#E5E7EB] rounded-full p-1.5 hover:bg-red-50 text-[#6B7280] hover:text-red-500 transition-colors shadow-sm"
                           >
                             <X size={13} />
                           </button>
                         </div>
                       ) : (
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#E5E7EB] rounded-xl cursor-pointer hover:border-[#0F766E] hover:bg-[#CCFBF1]/10 transition-colors">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#E5E7EB] rounded-xl cursor-pointer hover:border-[#0F766E] hover:bg-[#0F766E]/[0.03] transition-colors">
                           <input
                             type="file"
                             accept="image/*"
@@ -1142,15 +1294,15 @@ function BookingFlow() {
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                               </svg>
-                              <span className="text-xs">{zh ? '上傳中...' : 'Uploading...'}</span>
+                              <span className="text-xs">{zh ? '上傳中...' : 'Uploading…'}</span>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center gap-1.5 text-[#9CA3AF]">
                               <ImagePlus size={22} />
                               <span className="text-xs font-medium text-[#6B7280]">
-                                {zh ? '點擊選擇圖片' : 'Tap to choose an image'}
+                                {zh ? '點擊選擇圖片' : 'Tap to add a photo'}
                               </span>
-                              <span className="text-[10px]">{zh ? 'JPG、PNG，最大 10MB' : 'JPG, PNG up to 10 MB'}</span>
+                              <span className="text-[10px]">{zh ? 'JPG、PNG，最大 10MB' : 'JPG / PNG up to 10 MB'}</span>
                             </div>
                           )}
                         </label>
@@ -1162,22 +1314,30 @@ function BookingFlow() {
                   )}
 
                   {!isWaitlistSlot && visibleQuestions.length > 0 && (
-                    <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] p-4">
-                      <div className="mb-3">
-                        <p className="text-sm font-semibold text-[#111111]">
-                          {zh ? '預約小問題' : 'Booking Questions'}
+                    <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFAF8] p-4 space-y-4">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF] font-medium mb-1">
+                          {zh ? '預約小問題' : 'Quick questions'}
                         </p>
-                        <p className="text-xs text-[#6B7280] mt-1">
-                          {zh ? '只需快速回答幾條簡短問題。' : 'A few quick answers to help the business prepare.'}
+                        <p className="text-[11px] text-[#6B7280]">
+                          {zh ? '幫商戶提前準備，更快完成預約。' : 'A few quick answers help the business prepare.'}
                         </p>
                       </div>
 
                       <div className="space-y-4">
-                        {visibleQuestions.map((question) => (
-                          <div key={question.id} className="space-y-2">
-                            <label className="block text-xs font-medium text-[#3D3D3D]">
-                              {question.question_text}
-                              {question.is_required && <span className="ml-1 text-red-500">*</span>}
+                        {visibleQuestions.map((question, qi) => (
+                          <div
+                            key={question.id}
+                            className={`space-y-2 ${qi > 0 ? 'pt-3 border-t border-dashed border-[#E5E7EB]' : ''}`}
+                          >
+                            <label className="flex items-baseline gap-2 text-sm font-medium text-[#3D3D3D]">
+                              <span className="font-display text-[12px] font-light text-[#9CA3AF] tabular-nums shrink-0">
+                                {(qi + 1).toString().padStart(2, '0')}
+                              </span>
+                              <span className="flex-1">
+                                {question.question_text}
+                                {question.is_required && <span className="text-[#D97706] ml-1">*</span>}
+                              </span>
                             </label>
 
                             {question.input_type === 'text' && (
@@ -1194,7 +1354,7 @@ function BookingFlow() {
                               <select
                                 value={questionAnswers[question.id] || ''}
                                 onChange={(event) => updateQuestionAnswer(question.id, event.target.value)}
-                                className="w-full h-10 px-3 rounded-xl border border-[#E5E7EB] bg-white text-[#3D3D3D] text-sm transition-colors appearance-none focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E]"
+                                className="w-full h-10 px-3 rounded-lg border border-[#E5E7EB] bg-white text-[#3D3D3D] text-sm transition-colors appearance-none focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 focus:border-[#0F766E]"
                               >
                                 <option value="">{zh ? '請選擇' : 'Please select'}</option>
                                 {(question.options || []).map((option) => (
@@ -1217,8 +1377,8 @@ function BookingFlow() {
                                       onClick={() => updateQuestionAnswer(question.id, option.value)}
                                       className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                                         isSelected
-                                          ? 'border-[#0F766E] bg-[#CCFBF1]/40 text-[#0F766E]'
-                                          : 'border-[#E5E7EB] bg-white text-[#3D3D3D] hover:border-[#0F766E]'
+                                          ? 'border-[#0F766E] bg-[#0F766E]/[0.06] text-[#0F766E]'
+                                          : 'border-[#E5E7EB] bg-white text-[#3D3D3D] hover:border-[#0F766E]/50'
                                       }`}
                                     >
                                       {option.label}
@@ -1233,9 +1393,11 @@ function BookingFlow() {
                     </div>
                   )}
 
-                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
-                    <p className="text-xs font-medium text-[#6B7280] mb-0.5">{t('pdpoNotice')}</p>
-                    <p className="text-xs text-[#9CA3AF]">{t('pdpoText')}</p>
+                  <div className="rounded-lg border border-dashed border-[#E5E7EB] px-4 py-3 bg-[#FAFAF8]">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF] font-medium mb-1">
+                      {t('pdpoNotice')}
+                    </p>
+                    <p className="text-[11px] text-[#6B7280] leading-snug">{t('pdpoText')}</p>
                   </div>
                 </div>
 
@@ -1251,77 +1413,120 @@ function BookingFlow() {
 
         {/* ── Step: Confirm ── */}
         {step === 'confirm' && selectedService && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-5">
             <button
               onClick={() => setStep('select')}
-              className="flex items-center gap-1 text-xs text-[#6B7280] mb-3 hover:text-[#111111] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-[#6B7280] hover:text-[#111111] transition-colors cursor-pointer"
             >
-              <ChevronLeft size={14} /> {t('back')}
+              <ChevronLeft size={12} /> {t('back')}
             </button>
 
-            <h2 className="text-[15px] font-semibold text-[#111111] mb-3">
-              {isWaitlistSlot
-                ? (zh ? '確認輪候名單資料' : 'Confirm Waitlist Details')
-                : t('bookingSummary')}
-            </h2>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF] font-medium mb-1">
+                {isWaitlistSlot
+                  ? (zh ? '輪候名單' : 'Waitlist')
+                  : (zh ? '請確認' : 'Almost there')}
+              </p>
+              <h2 className="font-display text-[22px] font-light text-[#111111] leading-tight">
+                {isWaitlistSlot
+                  ? (zh ? '確認加入輪候名單' : 'Confirm waitlist')
+                  : t('bookingSummary')}
+                <span className="text-[#0F766E]">.</span>
+              </h2>
+            </div>
 
             {isWaitlistSlot && (
-              <div className="mb-3 flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl px-3.5 py-3 text-xs text-amber-800">
-                <Users size={14} className="shrink-0 mt-0.5 text-amber-600" />
+              <div
+                className="flex items-start gap-2.5 rounded-2xl px-4 py-3 text-xs"
+                style={{ background: '#FEF3C7', border: '1px solid #FDE68A', color: '#92400E' }}
+              >
+                <Users size={14} className="shrink-0 mt-0.5 text-amber-700" />
                 <p>
                   {zh
                     ? '此時段已滿。確認後你將加入輪候名單，並透過 WhatsApp 收到通知。'
-                    : 'This slot is fully booked. Confirm to join the waitlist — you\'ll be notified via WhatsApp if a spot opens.'}
+                    : 'This slot is fully booked. Confirm to join the waitlist — we\'ll WhatsApp you if a spot opens.'}
                 </p>
               </div>
             )}
 
-            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5">
-              <div className="space-y-3">
-                {[
-                  [t('service'), zh && selectedService.name_zh ? selectedService.name_zh : selectedService.name],
-                  [t('date'), format(selectedDate, 'MMM d, yyyy (EEEE)')],
-                  [t('time'), formatTime(selectedTime)],
-                  [t('duration'), `${selectedService.duration_minutes}${zh ? '分鐘' : ' min'}`],
-                  ...(!isWaitlistSlot && selectedService.pricing_type === 'tbc'
-                    ? [[t('price'), zh ? '待確認（確認預約時告知）' : 'TBC (confirmed by business)']]
-                    : selectedService.price_hkd && !isWaitlistSlot
-                      ? [[t('price'), formatPrice(selectedService.price_hkd)]]
+            {/* Hero summary card */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden">
+              <div className="h-1" style={{ background: isWaitlistSlot ? '#D97706' : '#0F766E' }} />
+              <div className="p-5">
+                <div className="flex items-end gap-5 pb-4 border-b border-dashed border-[#E5E7EB]">
+                  <div className="text-center shrink-0">
+                    <p className="font-display text-[44px] leading-none font-light text-[#111111] tabular-nums">
+                      {format(selectedDate, 'd')}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-[#9CA3AF] mt-1">
+                      {format(selectedDate, zh ? 'M月' : 'MMM')}
+                    </p>
+                  </div>
+                  <div className="h-12 w-px bg-[#E5E7EB]" />
+                  <div className="min-w-0 pb-1">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-[#9CA3AF] mb-1">
+                      {format(selectedDate, 'EEEE')}
+                    </p>
+                    <p className="font-display text-[18px] font-light text-[#111111] leading-tight tabular-nums">
+                      {formatTime(selectedTime)}
+                    </p>
+                    <p className="text-[11px] text-[#9CA3AF] mt-0.5">
+                      {selectedService.duration_minutes}{zh ? '分鐘' : ' min'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 mt-4">
+                  {[
+                    [t('service'), zh && selectedService.name_zh ? selectedService.name_zh : selectedService.name],
+                    ...(!isWaitlistSlot && selectedService.pricing_type === 'tbc'
+                      ? [[t('price'), zh ? '待確認（確認預約時告知）' : 'TBC (set on confirm)']]
+                      : selectedService.price_hkd && !isWaitlistSlot
+                        ? [[t('price'), formatPrice(selectedService.price_hkd)]]
+                        : []),
+                  ].map(([label, value], i) => (
+                    <div
+                      key={label}
+                      className={`flex justify-between text-sm ${i > 0 ? 'pt-2.5 border-t border-dashed border-[#F3F4F6]' : ''}`}
+                    >
+                      <span className="text-[#9CA3AF] text-[12px]">{label}</span>
+                      <span className="font-medium text-[#111111] text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-dashed border-[#E5E7EB] space-y-2.5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF] font-medium mb-1">
+                    {zh ? '你的資料' : 'You'}
+                  </p>
+                  {[
+                    [t('name'), customerName],
+                    ['WhatsApp', customerPhone],
+                    ...(!isWaitlistSlot
+                      ? visibleQuestions
+                          .filter((q) => questionAnswers[q.id]?.trim())
+                          .map((q) => [q.question_text, questionAnswers[q.id]] as [string, string])
                       : []),
-                ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between text-sm">
-                    <span className="text-[#6B7280]">{label}</span>
-                    <span className="font-medium text-[#111111]">{value}</span>
-                  </div>
-                ))}
-                <div className="h-px bg-[#E5E7EB] my-1" />
-                {[
-                  [t('name'), customerName],
-                  ['WhatsApp', customerPhone],
-                  ...(!isWaitlistSlot
-                    ? visibleQuestions
-                        .filter((question) => questionAnswers[question.id]?.trim())
-                        .map((question) => [question.question_text, questionAnswers[question.id]])
-                    : []),
-                ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between text-sm">
-                    <span className="text-[#6B7280]">{label}</span>
-                    <span className="font-medium text-[#111111] text-right max-w-[60%] whitespace-pre-wrap">{value}</span>
-                  </div>
-                ))}
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex justify-between gap-3 text-sm">
+                      <span className="text-[#9CA3AF] text-[12px] shrink-0">{label}</span>
+                      <span className="font-medium text-[#111111] text-right max-w-[60%] whitespace-pre-wrap">{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {bookingError && (
-                <div className="mt-4 px-3.5 py-2.5 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
+                <div className="mx-5 mb-5 px-3.5 py-2.5 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
                   {bookingError}
                 </div>
               )}
             </div>
 
-            {/* Business contact card (small, persistent context) */}
+            {/* Business contact card */}
             {business && (business.address_text || business.address_map_link || business.phone) && (
-              <div className="mt-4 bg-white border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
-                <p className="text-[10px] font-semibold tracking-wide text-[#6B7280] uppercase">
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 space-y-2.5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF] font-medium">
                   {zh ? '商戶資料' : 'Business'}
                 </p>
                 {business.address_map_link && (
@@ -1333,7 +1538,7 @@ function BookingFlow() {
                   >
                     <MapPin size={12} className="shrink-0" />
                     <span>{zh ? '查看 Google 地圖' : 'Open in Google Maps'}</span>
-                    <ExternalLink size={12} />
+                    <ExternalLink size={11} />
                   </a>
                 )}
                 {business.address_text && (
@@ -1344,7 +1549,7 @@ function BookingFlow() {
                 )}
                 {business.phone && (
                   <div className="flex items-center gap-2 text-xs text-[#3D3D3D]">
-                    <span className="text-[#0F766E]">☎</span>
+                    <PhoneIcon size={12} className="text-[#0F766E] shrink-0" />
                     <span>{business.phone}</span>
                   </div>
                 )}
@@ -1360,7 +1565,7 @@ function BookingFlow() {
                           href={url as string}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 rounded-full border border-[#D1FAE5] bg-[#ECFDF5] px-2 py-0.5 text-[10px] font-medium text-[#0F766E] hover:bg-[#D1FAE5]"
+                          className="inline-flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-white px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#0F766E] hover:bg-[#0F766E]/5 hover:border-[#0F766E]/30 transition-colors"
                         >
                           {SOCIAL_LABELS[platform as keyof typeof SOCIAL_LABELS]}
                           <ExternalLink size={9} />
@@ -1376,19 +1581,22 @@ function BookingFlow() {
       </div>
 
       {/* ── Sticky bottom CTA ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#E5E7EB] bg-white/95 backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#E5E7EB] bg-white/95 backdrop-blur-md">
         <div className="max-w-md mx-auto px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           {step === 'select' && (
             <>
-              {/* Selected summary line */}
               {selectedService && selectedTime && (
                 <div className="flex items-center justify-between mb-2 px-1">
-                  <span className="text-[11px] text-[#6B7280] truncate">
+                  <span className="text-[11px] text-[#9CA3AF] truncate inline-flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-[#0F766E]" />
                     {zh && selectedService.name_zh ? selectedService.name_zh : selectedService.name}
-                    {' · '}{format(selectedDate, zh ? 'M月d日' : 'MMM d')}{' · '}{formatTime(selectedTime)}
+                    <span className="text-[#D1D5DB]">·</span>
+                    {format(selectedDate, zh ? 'M月d日' : 'MMM d')}
+                    <span className="text-[#D1D5DB]">·</span>
+                    {formatTime(selectedTime)}
                   </span>
                   {selectedService.price_hkd && !isWaitlistSlot && (
-                    <span className="text-[12px] font-bold text-[#111111] shrink-0 ml-2">
+                    <span className="font-display text-[14px] font-light text-[#111111] shrink-0 ml-2 tabular-nums">
                       {formatPrice(selectedService.price_hkd)}
                     </span>
                   )}
@@ -1397,19 +1605,19 @@ function BookingFlow() {
               <button
                 disabled={!canProceedFromSelect || !customerName.trim() || !customerPhone.trim() || Boolean(!isWaitlistSlot && missingRequiredQuestion)}
                 onClick={() => setStep('confirm')}
-                className={`w-full py-3.5 rounded-2xl text-[15px] font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={`w-full py-3.5 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
                   ctaWaitlist
-                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                    : 'bg-[#0F766E] hover:bg-[#0D9488] text-white'
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm hover:shadow'
+                    : 'bg-[#0F766E] hover:bg-[#0D9488] text-white shadow-sm hover:shadow'
                 }`}
               >
                 {ctaWaitlist ? (
-                  <><Users size={16} />{zh ? '加入輪候名單' : 'Join Waitlist'}</>
+                  <><Users size={15} />{zh ? '加入輪候名單' : 'Join Waitlist'}</>
                 ) : (
-                  <>{t('bookNow')}<ArrowRight size={16} /></>
+                  <>{t('bookNow')}<ArrowRight size={15} /></>
                 )}
               </button>
-              <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] text-[#9CA3AF]">
+              <div className="mt-2 flex items-center justify-center gap-1.5 text-[9px] uppercase tracking-[0.18em] text-[#9CA3AF]">
                 <ShieldCheck size={11} className="text-[#0F766E]" />
                 <span>{zh ? '安全預約' : 'Secure booking'}</span>
               </div>
@@ -1420,8 +1628,10 @@ function BookingFlow() {
             <button
               onClick={isWaitlistSlot ? handleWaitlistSubmit : handleSubmit}
               disabled={submitting}
-              className={`w-full py-3.5 rounded-2xl text-[15px] font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
-                isWaitlistSlot ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-[#0F766E] hover:bg-[#0D9488] text-white'
+              className={`w-full py-3.5 rounded-2xl text-[14px] font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 ${
+                isWaitlistSlot
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm hover:shadow'
+                  : 'bg-[#0F766E] hover:bg-[#0D9488] text-white shadow-sm hover:shadow'
               }`}
             >
               {submitting ? (
@@ -1433,8 +1643,10 @@ function BookingFlow() {
                   {isWaitlistSlot ? (zh ? '加入中⋯' : 'Joining…') : (zh ? '確認中⋯' : 'Confirming…')}
                 </>
               ) : isWaitlistSlot ? (
-                <><Users size={16} />{zh ? '加入輪候名單' : 'Join Waitlist'}</>
-              ) : t('confirmBooking')}
+                <><Users size={15} />{zh ? '加入輪候名單' : 'Join Waitlist'}</>
+              ) : (
+                <>{t('confirmBooking')}<ArrowRight size={15} /></>
+              )}
             </button>
           )}
         </div>
