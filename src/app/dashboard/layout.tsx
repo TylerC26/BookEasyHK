@@ -52,7 +52,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
-    { href: '/dashboard', label: t('todaySchedule'), icon: Calendar, exact: true },
+    { href: '/dashboard', label: t('dashboard'), icon: Calendar, exact: true },
     { href: '/dashboard/requests', label: t('bookingRequests'), icon: Inbox, exact: true, showPendingDot: true },
     { href: '/dashboard/bookings', label: t('allBookings'), icon: List },
     { href: '/dashboard/settings/business', label: zh ? '商戶' : 'Business', icon: Building2 },

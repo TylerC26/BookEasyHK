@@ -45,6 +45,7 @@ export interface Service {
   active: boolean;
   sort_order: number;
   allow_customer_image: boolean;
+  image_url: string | null;
   created_at: string;
 }
 

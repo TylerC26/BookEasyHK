@@ -235,7 +235,7 @@ export default function BookingsPage() {
                   </div>
 
                   {/* Content with coloured left border */}
-                  <div className={`flex-1 min-w-0 border-l-2 pl-3 ${STATUS_BORDER[b.status]}`}>
+                  <div className={`flex-1 min-w-0 border-l-4 pl-3 ${STATUS_BORDER[b.status]}`}>
                     <div className="flex items-start justify-between gap-2 mb-0.5">
                       <div className="min-w-0">
                         <span className="text-sm font-medium text-on-surface truncate block">
@@ -428,7 +428,7 @@ function CalendarView({
                       <span className="text-xs text-muted leading-none">{formatTime(b.end_time)}</span>
                     </div>
                     {/* Content with coloured left border */}
-                    <div className={`flex-1 min-w-0 border-l-2 pl-3 ${STATUS_BORDER[b.status]}`}>
+                    <div className={`flex-1 min-w-0 border-l-4 pl-3 ${STATUS_BORDER[b.status]}`}>
                       <div className="flex items-start justify-between gap-2">
                         <span className="text-sm font-medium text-on-surface truncate">{b.customer_name}</span>
                         <Badge variant={badge.variant} className="shrink-0">

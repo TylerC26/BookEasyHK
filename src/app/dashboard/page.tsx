@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translations';
@@ -11,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { formatPrice, formatTime, addMinutesToTime } from '@/lib/utils';
 import type { Booking, Business, Service } from '@/lib/types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { CalendarCheck, Clock, AlertTriangle, ChevronRight, Plus, X, UserCheck } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'success' | 'warning' | 'danger' | 'muted'; label_zh: string; label_en: string }> = {
@@ -36,6 +37,8 @@ export default function DashboardPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [todayBookings, setTodayBookings] = useState<Booking[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+  const [monthBookings, setMonthBookings] = useState<Booking[]>([]);
+  const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [showManual, setShowManual] = useState(false);
   const [showBlock, setShowBlock] = useState(false);
@@ -102,6 +105,31 @@ export default function DashboardPage() {
       .limit(20);
 
     setUpcomingBookings(upcomingData || []);
+
+    const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+    const monthEnd = format(endOfMonth(new Date()), 'yyyy-MM-dd');
+
+    const { data: monthData } = await supabase
+      .from('bookings')
+      .select('*, service:services(*)')
+      .eq('business_id', biz.id)
+      .gte('booking_date', monthStart)
+      .lte('booking_date', monthEnd)
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false });
+
+    setMonthBookings(monthData || []);
+
+    const { data: pendingData } = await supabase
+      .from('bookings')
+      .select('*, service:services(*), booking_answers(*, question:booking_questions(*))')
+      .eq('business_id', biz.id)
+      .eq('status', 'pending')
+      .order('booking_date')
+      .order('start_time')
+      .limit(10);
+
+    setPendingBookings(pendingData || []);
     setLoading(false);
   }, []);
 
@@ -215,22 +243,17 @@ export default function DashboardPage() {
 
   const zh = locale === 'zh-HK';
 
-  // Revenue estimate from confirmed/completed bookings
-  const allBookings = [...todayBookings, ...upcomingBookings];
-  const revenueEstimate = allBookings.reduce((sum, b) => {
+  // Earnings this month — sum of completed bookings within the current month
+  const revenueEstimate = monthBookings.reduce((sum, b) => {
+    if (b.status !== 'completed') return sum;
     const price = b.price_hkd ?? (b.service as Service | null)?.price_hkd ?? 0;
-    return sum + (b.status !== 'cancelled' ? price : 0);
+    return sum + price;
   }, 0);
-
-  const noShowCount = todayBookings.filter((b) => b.status === 'no_show').length;
-  const noShowRate = todayBookings.length > 0
-    ? Math.round((noShowCount / todayBookings.length) * 100)
-    : 0;
 
   const stats = {
     today: todayBookings.length,
     revenue: revenueEstimate,
-    noShowRate,
+    monthTotal: monthBookings.length,
     upcoming: upcomingBookings.length,
   };
 
@@ -270,16 +293,15 @@ export default function DashboardPage() {
           <p className="text-xs text-[#0F766E] mt-1">↑ 2 {zh ? '高於平均' : 'vs avg'}</p>
         </Card>
         <Card>
-          <p className="text-xs text-[#6B7280] mb-1">{zh ? '收入估算' : 'Est. Revenue'}</p>
+          <p className="text-xs text-[#6B7280] mb-1">{zh ? '本月收入' : 'Earnings this month'}</p>
           <p className="text-3xl font-bold text-[#111111]">
             {stats.revenue > 0 ? `$${(stats.revenue / 1000).toFixed(0)}k` : '$0'}
           </p>
           <p className="text-xs text-[#0F766E] mt-1">↑ 12%</p>
         </Card>
         <Card>
-          <p className="text-xs text-[#6B7280] mb-1">{t('noShowRate')}</p>
-          <p className="text-3xl font-bold text-[#111111]">{stats.noShowRate}%</p>
-          <p className="text-xs text-red-500 mt-1">↓ 3%</p>
+          <p className="text-xs text-[#6B7280] mb-1">{zh ? '本月預約總數' : 'Bookings this month'}</p>
+          <p className="text-3xl font-bold text-[#111111]">{stats.monthTotal}</p>
         </Card>
         <Card>
           <p className="text-xs text-[#6B7280] mb-1">{t('upcoming')}</p>
@@ -292,54 +314,124 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Today's Schedule */}
-      <Card>
-        <CardTitle className="mb-4">{t('todaySchedule')}</CardTitle>
-        {todayBookings.length === 0 ? (
-          <div className="text-center py-8 text-muted">
-            <CalendarCheck size={32} className="mx-auto mb-2 opacity-40" />
-            <p>{t('noBookingsToday')}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {todayBookings.map((booking) => (
-              <BookingRow
-                key={booking.id}
-                booking={booking}
-                locale={locale}
-                onUpdateStatus={updateBookingStatus}
-                onSelect={setSelectedBooking}
-                t={t}
-              />
-            ))}
-          </div>
-        )}
-      </Card>
+      {/* Today's Schedule + Upcoming — side by side */}
+      <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+        <Card>
+          <CardTitle className="mb-4">{t('todaySchedule')}</CardTitle>
+          {todayBookings.length === 0 ? (
+            <div className="text-center py-8 text-muted">
+              <CalendarCheck size={32} className="mx-auto mb-2 opacity-40" />
+              <p>{t('noBookingsToday')}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {todayBookings.map((booking) => (
+                <BookingRow
+                  key={booking.id}
+                  booking={booking}
+                  locale={locale}
+                  onUpdateStatus={updateBookingStatus}
+                  onSelect={setSelectedBooking}
+                  t={t}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
 
-      {/* Upcoming */}
-      <Card>
-        <CardTitle className="mb-4">{t('upcoming')}</CardTitle>
-        {upcomingBookings.length === 0 ? (
-          <div className="text-center py-8 text-muted">
-            <Clock size={32} className="mx-auto mb-2 opacity-40" />
-            <p>{t('noUpcoming')}</p>
+        <Card>
+          <CardTitle className="mb-4">{t('upcoming')}</CardTitle>
+          {upcomingBookings.length === 0 ? (
+            <div className="text-center py-8 text-muted">
+              <Clock size={32} className="mx-auto mb-2 opacity-40" />
+              <p>{t('noUpcoming')}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {upcomingBookings.map((booking) => (
+                <BookingRow
+                  key={booking.id}
+                  booking={booking}
+                  locale={locale}
+                  showDate
+                  onUpdateStatus={updateBookingStatus}
+                  onSelect={setSelectedBooking}
+                  t={t}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Previews — Pending confirmations + All bookings (recent) */}
+      <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle>{zh ? '待確認預約' : 'Pending confirmation'}</CardTitle>
+            <Link
+              href="/dashboard/requests"
+              className="text-xs text-[#0F766E] hover:underline inline-flex items-center gap-0.5"
+            >
+              {zh ? '查看全部' : 'View all'}
+              <ChevronRight size={12} />
+            </Link>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {upcomingBookings.map((booking) => (
-              <BookingRow
-                key={booking.id}
-                booking={booking}
-                locale={locale}
-                showDate
-                onUpdateStatus={updateBookingStatus}
-                onSelect={setSelectedBooking}
-                t={t}
-              />
-            ))}
+          {pendingBookings.length === 0 ? (
+            <div className="text-center py-8 text-muted">
+              <UserCheck size={32} className="mx-auto mb-2 opacity-40" />
+              <p>{zh ? '沒有待確認預約' : 'No pending requests'}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendingBookings.slice(0, 4).map((booking) => (
+                <BookingRow
+                  key={booking.id}
+                  booking={booking}
+                  locale={locale}
+                  showDate
+                  onUpdateStatus={updateBookingStatus}
+                  onSelect={setSelectedBooking}
+                  t={t}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle>{zh ? '本月預約' : 'Recent bookings'}</CardTitle>
+            <Link
+              href="/dashboard/bookings"
+              className="text-xs text-[#0F766E] hover:underline inline-flex items-center gap-0.5"
+            >
+              {zh ? '查看全部' : 'View all'}
+              <ChevronRight size={12} />
+            </Link>
           </div>
-        )}
-      </Card>
+          {monthBookings.length === 0 ? (
+            <div className="text-center py-8 text-muted">
+              <CalendarCheck size={32} className="mx-auto mb-2 opacity-40" />
+              <p>{zh ? '本月暫無預約' : 'No bookings this month'}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {monthBookings.slice(0, 4).map((booking) => (
+                <BookingRow
+                  key={booking.id}
+                  booking={booking}
+                  locale={locale}
+                  showDate
+                  onUpdateStatus={updateBookingStatus}
+                  onSelect={setSelectedBooking}
+                  t={t}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Booking Detail Modal */}
       {selectedBooking && (
@@ -471,7 +563,7 @@ function BookingRow({
 
   return (
     <div
-      className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors"
+      className={`flex items-center gap-2 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors border-l-4 ${STATUS_BORDER[booking.status]}`}
       onClick={() => onSelect(booking)}
     >
       {/* Time column */}
@@ -481,8 +573,8 @@ function BookingRow({
         <span className="text-xs text-muted leading-none">{formatTime(booking.end_time)}</span>
       </div>
 
-      {/* Content with coloured left border */}
-      <div className={`flex-1 min-w-0 border-l-2 pl-3 ${STATUS_BORDER[booking.status]}`}>
+      {/* Content */}
+      <div className="flex-1 min-w-0 pl-3">
         <div className="flex items-center gap-2 mb-1">
           <span className="font-semibold text-base truncate">{booking.customer_name}</span>
           {showDate && <span className="text-xs text-muted shrink-0">{format(parseISO(booking.booking_date), 'MMM d')}</span>}

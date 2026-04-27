@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Save, Trash2, ImagePlus } from 'lucide-react';
+import { Plus, Save, Trash2, ImagePlus, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/i18n/context';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { uploadBusinessImage } from '@/lib/business-images';
+import { getBusinessTypeEmoji } from '@/lib/utils';
 import type { Business, Service } from '@/lib/types';
 
 export default function ServicesSettingsPage() {
@@ -17,6 +19,8 @@ export default function ServicesSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState('');
 
   const loadData = useCallback(async () => {
     const supabase = createClient();
@@ -67,6 +71,7 @@ export default function ServicesSettingsPage() {
           active: svc.active,
           sort_order: svc.sort_order,
           allow_customer_image: svc.allow_customer_image,
+          image_url: svc.image_url,
         });
         if (error) {
           setSaveError(error.message);
@@ -84,6 +89,7 @@ export default function ServicesSettingsPage() {
             pricing_type: svc.pricing_type,
             active: svc.active,
             allow_customer_image: svc.allow_customer_image,
+            image_url: svc.image_url,
           })
           .eq('id', svc.id);
         if (error) {
@@ -114,9 +120,26 @@ export default function ServicesSettingsPage() {
         active: true,
         sort_order: services.length,
         allow_customer_image: false,
+        image_url: null,
         created_at: new Date().toISOString(),
       },
     ]);
+  };
+
+  const handleImageUpload = async (idx: number, file: File) => {
+    setUploadError('');
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setUploadError('Not signed in.'); return; }
+    setUploadingIdx(idx);
+    try {
+      const url = await uploadBusinessImage(supabase, user.id, file);
+      updateService(idx, 'image_url', url);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed.');
+    } finally {
+      setUploadingIdx(null);
+    }
   };
 
   const removeService = async (idx: number) => {
@@ -163,13 +186,64 @@ export default function ServicesSettingsPage() {
         <div className="space-y-3">
           {services.map((svc, idx) => (
             <div key={svc.id} className="p-4 bg-slate-50 rounded-xl space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <Input
-                  id={`svc-${idx}-name`}
-                  label={t('serviceName')}
-                  value={svc.name}
-                  onChange={(e) => updateService(idx, 'name', e.target.value)}
-                />
+              {/* Service image (optional) */}
+              <div className="flex items-start gap-3">
+                <div className="shrink-0">
+                  <label
+                    className="relative block w-20 h-20 rounded-xl overflow-hidden border-2 border-dashed border-slate-300 bg-white cursor-pointer hover:border-[#0F766E] transition-colors group"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingIdx === idx}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(idx, file);
+                        e.target.value = '';
+                      }}
+                    />
+                    {svc.image_url ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={svc.image_url}
+                          alt={svc.name || 'Service'}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <ImagePlus size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </>
+                    ) : uploadingIdx === idx ? (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-500 animate-pulse">
+                        {locale === 'zh-HK' ? '上傳中...' : 'Uploading…'}
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-slate-400">
+                        <span className="text-2xl" aria-hidden>{getBusinessTypeEmoji(business?.type || '')}</span>
+                        <span className="text-[9px] font-medium">{locale === 'zh-HK' ? '加圖片' : 'Add photo'}</span>
+                      </div>
+                    )}
+                  </label>
+                  {svc.image_url && (
+                    <button
+                      type="button"
+                      onClick={() => updateService(idx, 'image_url', null)}
+                      className="mt-1 w-full flex items-center justify-center gap-1 text-[10px] text-slate-500 hover:text-red-500 transition-colors"
+                    >
+                      <X size={10} />
+                      {locale === 'zh-HK' ? '移除' : 'Remove'}
+                    </button>
+                  )}
+                </div>
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input
+                    id={`svc-${idx}-name`}
+                    label={t('serviceName')}
+                    value={svc.name}
+                    onChange={(e) => updateService(idx, 'name', e.target.value)}
+                  />
                 <Input
                   id={`svc-${idx}-zh`}
                   label={t('serviceNameZh')}
@@ -208,7 +282,12 @@ export default function ServicesSettingsPage() {
                     <Trash2 size={16} />
                   </button>
                 </div>
+                </div>
               </div>
+
+              {uploadError && uploadingIdx === null && (
+                <p className="text-xs text-red-500">{uploadError}</p>
+              )}
 
               {/* Per-service options */}
               <div className="pt-2 border-t border-slate-200 space-y-3">

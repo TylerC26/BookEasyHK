@@ -3,6 +3,7 @@
 import { I18nProvider, useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/language-toggle';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Check, Menu, X, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 
@@ -39,9 +40,9 @@ function LandingPage() {
   ];
 
   const stats = [
-    { value: '80%', label: zh ? '減少爽約率' : 'Fewer no-shows' },
     { value: '30s', label: zh ? '完成設定' : 'Setup time' },
-    { value: '2,400+', label: zh ? '香港商戶' : 'HK businesses' },
+    { value: '0%', label: zh ? '每單佣金' : 'Per-booking fees' },
+    { value: '24/7', label: zh ? '客戶隨時預約' : 'Bookings open' },
   ];
 
   return (
@@ -165,49 +166,17 @@ function LandingPage() {
               </p>
             </div>
 
-            {/* Right: Mock booking card */}
+            {/* Right: Hero image */}
             <div className="relative animate-fade-up" style={{ animationDelay: '0.1s' }}>
-              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-elevated">
-                {/* Card header */}
-                <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[#E5E7EB]">
-                  <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] flex items-center justify-center text-lg">💅</div>
-                  <div>
-                    <div className="text-sm font-semibold text-[#111111]">Star Nail Studio</div>
-                    <div className="text-xs text-[#6B7280]">{zh ? '旺角 · 開放預約中' : 'Mong Kok · Now accepting bookings'}</div>
-                  </div>
-                  <div className="ml-auto w-2 h-2 rounded-full bg-[#10b981]" />
-                </div>
-
-                {/* Services */}
-                <div className="space-y-2 mb-4">
-                  {[
-                    { name: zh ? '法式凝膠甲' : 'French Gel Nails', dur: zh ? '90分鐘' : '90 min', price: 'HK$380', selected: true },
-                    { name: zh ? '卸甲 + 基礎護理' : 'Removal + Care', dur: zh ? '45分鐘' : '45 min', price: 'HK$180', selected: false },
-                    { name: zh ? '手部保養' : 'Hand Treatment', dur: zh ? '30分鐘' : '30 min', price: 'HK$120', selected: false },
-                  ].map((svc) => (
-                    <div
-                      key={svc.name}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm cursor-pointer transition-colors ${
-                        svc.selected
-                          ? 'border-[#0F766E] bg-[#CCFBF1]'
-                          : 'border-[#E5E7EB] bg-white hover:border-[#0F766E]'
-                      }`}
-                    >
-                      <div>
-                        <div className="font-medium text-[#111111]">{svc.name}</div>
-                        <div className="text-xs text-[#6B7280]">{svc.dur}</div>
-                      </div>
-                      <div className="font-semibold text-[#111111]">{svc.price}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  href="/auth/signup"
-                  className="block w-full text-center py-2.5 bg-[#0F766E] text-white text-sm font-medium rounded-lg hover:bg-[#0D9488] transition-colors"
-                >
-                  {zh ? '選擇日期和時間 →' : 'Choose date & time →'}
-                </Link>
+              <div className="overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-elevated">
+                <Image
+                  src="/herosquare.png"
+                  alt={zh ? 'BookEasy 預約流程示範' : 'BookEasy booking flow preview'}
+                  width={1024}
+                  height={1024}
+                  priority
+                  className="w-full h-auto block"
+                />
               </div>
 
               {/* Floating badge */}
@@ -237,8 +206,8 @@ function LandingPage() {
               <p className="text-xs font-semibold tracking-widest text-[#0F766E] uppercase mb-2">
                 {zh ? '核心功能' : 'Core Features'}
               </p>
-              <h2 className="font-display text-4xl font-light text-[#111111] max-w-md leading-tight">
-                {zh ? '一切你需要的，\n一個平台搞定。' : 'Everything you need,\nin one place.'}
+              <h2 className="font-display text-4xl font-light text-[#111111] leading-tight">
+                {zh ? '一切你需要的，一個平台搞定。' : 'Everything you need, in one place.'}
               </h2>
             </div>
 

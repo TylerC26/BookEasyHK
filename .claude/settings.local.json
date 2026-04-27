@@ -20,7 +20,12 @@
       "Bash(ls *.sql)",
       "Bash(ls supabase/seed*)",
       "Bash(find /Users/tylerc26/Dev/BookEasyHK/src/lib -name \"*.ts\" -exec basename {} \\\\;)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(awk -F'=' '{print $1}')",
+      "Bash(npx next *)",
+      "Bash(npx eslint *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(git checkout *)"
     ]
   }
 }
