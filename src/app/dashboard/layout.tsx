@@ -7,8 +7,18 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, List, Settings, ExternalLink, LogOut, Menu, X, Building2, BriefcaseBusiness, Inbox, MessageSquareText } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import type { Business } from '@/lib/types';
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+  showPendingDot?: boolean;
+  child?: boolean;
+};
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const { t, locale } = useI18n();
@@ -51,13 +61,13 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     router.refresh();
   };
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: '/dashboard', label: t('dashboard'), icon: Calendar, exact: true },
     { href: '/dashboard/requests', label: t('bookingRequests'), icon: Inbox, exact: true, showPendingDot: true },
     { href: '/dashboard/bookings', label: t('allBookings'), icon: List },
     { href: '/dashboard/settings/business', label: zh ? '商戶' : 'Business', icon: Building2 },
-    { href: '/dashboard/settings/services', label: zh ? '服務' : 'Services', icon: BriefcaseBusiness },
-    { href: '/dashboard/settings/booking-questions', label: zh ? '預約問題' : 'Booking Questions', icon: MessageSquareText },
+    { href: '/dashboard/settings/services', label: zh ? '服務' : 'Services', icon: BriefcaseBusiness, exact: true },
+    { href: '/dashboard/settings/services/booking-questions', label: zh ? '預約問題' : 'Booking Questions', icon: MessageSquareText, child: true },
   ];
 
   const initials = business?.name
@@ -107,13 +117,15 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm mb-0.5 transition-colors border-l-2 ${
+                className={`flex items-center gap-2.5 rounded-lg mb-0.5 transition-colors border-l-2 ${
+                  item.child ? 'pl-9 pr-3 py-1.5 text-[13px]' : 'px-3 py-2 text-sm'
+                } ${
                   isActive
                     ? 'bg-white/6 text-white border-[#0D9488]'
                     : 'text-white/50 hover:text-white/70 hover:bg-white/4 border-transparent'
                 }`}
               >
-                <item.icon size={15} />
+                <item.icon size={item.child ? 13 : 15} />
                 <span className="flex-1 min-w-0 truncate">{item.label}</span>
                 {item.showPendingDot && pendingCount > 0 && (
                   <>
