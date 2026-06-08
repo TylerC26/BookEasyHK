@@ -86,7 +86,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
       {/* ── SIDEBAR ── */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-56 bg-[#111111] flex flex-col transform transition-transform lg:transform-none ${
+        className={`fixed lg:sticky inset-y-0 lg:top-0 left-0 z-50 w-56 lg:h-screen lg:self-start bg-[#111111] flex flex-col transform transition-transform lg:transform-none ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -106,7 +106,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4">
           <div className="text-[10px] font-semibold tracking-widest text-white/25 uppercase px-2 mb-2">
             {zh ? '主選單' : 'Main'}
           </div>
