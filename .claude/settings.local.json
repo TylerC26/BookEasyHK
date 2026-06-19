@@ -25,7 +25,9 @@
       "Bash(npx next *)",
       "Bash(npx eslint *)",
       "Bash(pkill -f \"next dev\")",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)"
     ]
   }
 }
